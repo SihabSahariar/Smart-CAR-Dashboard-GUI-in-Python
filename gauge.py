@@ -1,9 +1,9 @@
+# Sihab Sahariar (Fixed, 2023)
+
 import math
 
 try:
-    # print("trying to import Qt4 @ analoggaugewidget.py")
     from PyQt4.QtGui import QMainWindow
-
     from PyQt4.QtGui import QWidget
     from PyQt4.QtGui import QApplication
     from PyQt4.QtGui import QPolygon, QPolygonF, QColor, QPen, QFont
@@ -15,10 +15,8 @@ try:
     from PyQt4.QtCore import Qt, QTime, QTimer, QPoint, QPointF, SIGNAL, QRect, QSize
     from PyQt4.QtCore import QObject, pyqtSignal
     # QtCore -> Qt.NoPen, QTime, QTimer, QPoint, QPointF, QRect, QSize
-
-
     used_Qt_Version = 4
-    print("end trying to import Qt4 @ analoggaugewidget.py")
+    print("Successful import Qt4 @ gauge.py")
     # Antialysing may be problem with Qt4
     print("ToDo: Fix error output QPainter.Antialiasing")
 
@@ -41,14 +39,12 @@ except:
         # QtCore -> Qt.NoPen ,QTime, QTimer, QPoint, QPointF, QRect, QSize
 
         used_Qt_Version = 5
-        print("end trying to import Qt5 @ analoggaugewidget.py")
+        print("Successful import Qt5 @ gauge.py")
     except:
         print("Error Import Qt 4 & 5 @ analoggaugewidget.py")
         exit()
 
-##########################################
-# todo: Dokumentieren
-##########################################
+
 
 class AnalogGaugeWidget(QWidget):
     """Fetches rows from a Bigtable.
@@ -155,10 +151,7 @@ class AnalogGaugeWidget(QWidget):
         # necessary for resize
         self.setMouseTracking(False)
 
-        # QTimer sorgt für neu Darstellung alle X ms
-        # evtl performance hier verbessern mit self.update() und self.use_timer_event = False
-        # todo: self.update als default ohne ueberpruefung, ob self.use_timer_event gesetzt ist oder nicht
-        # Timer startet alle 10ms das event paintEvent
+
         if self.use_timer_event:
             timer = QTimer(self)
             timer.timeout.connect(self.update)
@@ -205,6 +198,8 @@ class AnalogGaugeWidget(QWidget):
 
         # print("slotMethod end")
         pass
+    def creator(self):
+        print("Sihab Sahariar | www.github.com/sihabsahariar")
 
     def change_value_needle_style(self, design):
         # prepared for multiple needle instrument
@@ -231,7 +226,7 @@ class AnalogGaugeWidget(QWidget):
         self.valueChanged.emit(int(value))
         # print(self.value)
 
-        # ohne timer: aktiviere self.update()
+
         if not self.use_timer_event:
             self.update()
 
@@ -248,9 +243,7 @@ class AnalogGaugeWidget(QWidget):
         self.center_vertical_value = value
         # print("vertical: " + str(self.center_vertical_value))
 
-    ###############################################################################################
-    # Set Methods
-    ###############################################################################################
+
     def set_NeedleColor(self, R=50, G=50, B=50, Transparency=255):
         # Red: R = 0 - 255
         # Green: G = 0 - 255
@@ -431,12 +424,6 @@ class AnalogGaugeWidget(QWidget):
 
     def create_polygon_pie(self, outer_radius, inner_raduis, start, lenght):
         polygon_pie = QPolygonF()
-        # start = self.scale_angle_start_value
-        # start = 0
-        # lenght = self.scale_angle_size
-        # lenght = 180
-        # inner_raduis = self.width()/4
-        # print(start)
         n = 360     # angle steps size for full circle
         # changing n value will causes drawing issues
         w = 360 / n   # angle per step
@@ -444,7 +431,7 @@ class AnalogGaugeWidget(QWidget):
         x = 0
         y = 0
 
-        # todo enable/disable bar graf here
+
         if not self.enable_barGraph:
             # float_value = ((lenght / (self.value_max - self.value_min)) * (self.value - self.value_min))
             lenght = int(round((lenght / (self.value_max - self.value_min)) * (self.value - self.value_min)))
@@ -474,7 +461,7 @@ class AnalogGaugeWidget(QWidget):
         if not self.scale_polygon_colors == None:
             painter_filled_polygon = QPainter(self)
             painter_filled_polygon.setRenderHint(QPainter.Antialiasing)
-            # Koordinatenursprung in die Mitte der Flaeche legen
+
             painter_filled_polygon.translate(self.width() / 2, self.height() / 2)
 
             painter_filled_polygon.setPen(Qt.NoPen)
@@ -492,7 +479,7 @@ class AnalogGaugeWidget(QWidget):
             grad = QConicalGradient(QPointF(0, 0), - self.scale_angle_size - self.scale_angle_start_value +
                                     self.angle_offset - 1)
 
-            # todo definition scale color as array here
+   
             for eachcolor in self.scale_polygon_colors:
                 grad.setColorAt(eachcolor[0], eachcolor[1])
             # grad.setColorAt(.00, Qt.red)
@@ -505,14 +492,10 @@ class AnalogGaugeWidget(QWidget):
             painter_filled_polygon.drawPolygon(colored_scale_polygon)
             # return painter_filled_polygon
 
-    ###############################################################################################
-    # Scale Marker
-    ###############################################################################################
 
     def draw_big_scaled_markter(self):
         my_painter = QPainter(self)
         my_painter.setRenderHint(QPainter.Antialiasing)
-        # Koordinatenursprung in die Mitte der Flaeche legen
         my_painter.translate(self.width() / 2, self.height() / 2)
 
         # my_painter.setPen(Qt.NoPen)
@@ -535,7 +518,6 @@ class AnalogGaugeWidget(QWidget):
         # painter.setRenderHint(QPainter.HighQualityAntialiasing)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Koordinatenursprung in die Mitte der Flaeche legen
         painter.translate(self.width() / 2, self.height() / 2)
         # painter.save()
         font = QFont(self.scale_fontname, self.scale_fontsize)
@@ -571,7 +553,7 @@ class AnalogGaugeWidget(QWidget):
         my_painter = QPainter(self)
 
         my_painter.setRenderHint(QPainter.Antialiasing)
-        # Koordinatenursprung in die Mitte der Flaeche legen
+
         my_painter.translate(self.width() / 2, self.height() / 2)
 
         my_painter.setPen(Qt.black)
@@ -588,7 +570,7 @@ class AnalogGaugeWidget(QWidget):
         # painter.setRenderHint(QPainter.HighQualityAntialiasing)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Koordinatenursprung in die Mitte der Flaeche legen
+
         painter.translate(self.width() / 2, self.height() / 2)
         # painter.save()
         # xShadow = 3.0
@@ -610,9 +592,6 @@ class AnalogGaugeWidget(QWidget):
         h = fm.height()
         painter.setFont(QFont(self.value_fontname, self.value_fontsize))
 
-        # Mitte zwischen Skalenstart und Skalenende:
-        # Skalenende = Skalenanfang - 360 + Skalenlaenge
-        # Skalenmitte = (Skalenende - Skalenanfang) / 2 + Skalenanfang
         angle_end = float(self.scale_angle_start_value + self.scale_angle_size - 360)
         angle = (angle_end - self.scale_angle_start_value) / 2 + self.scale_angle_start_value
 
@@ -628,7 +607,7 @@ class AnalogGaugeWidget(QWidget):
         # painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Koordinatenursprung in die Mitte der Flaeche legen
+
         painter.translate(self.width() / 2, self.height() / 2)
         painter.setPen(Qt.NoPen)
         # painter.setPen(Qt.NoPen)
@@ -640,7 +619,7 @@ class AnalogGaugeWidget(QWidget):
         painter = QPainter(self)
         # painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
         painter.setRenderHint(QPainter.Antialiasing)
-        # Koordinatenursprung in die Mitte der Flaeche legen
+
         painter.translate(self.width() / 2, self.height() / 2)
         painter.setPen(Qt.NoPen)
         painter.setBrush(self.NeedleColor)
@@ -654,21 +633,13 @@ class AnalogGaugeWidget(QWidget):
     ###############################################################################################
 
     def resizeEvent(self, event):
-        # self.resized.emit()
-        # return super(self.parent, self).resizeEvent(event)
-        # print("resized")
-        # print(self.width())
+
         self.rescale_method()
         # self.emit(QtCore.SIGNAL("resize()"))
         # print("resizeEvent")
 
     def paintEvent(self, event):
-        # Main Drawing Event:
-        # Will be executed on every change
-        # vgl http://doc.qt.io/qt-4.8/qt-demos-affine-xform-cpp.html
-        # print("event", event)
 
-        # colored pie area
         if self.enable_filled_Polygon:
             self.draw_filled_polygon()
 
@@ -722,8 +693,7 @@ class AnalogGaugeWidget(QWidget):
         x, y = event.x() - (self.width() / 2), event.y() - (self.height() / 2)
         if not x == 0:
             angle = math.atan2(y, x) / math.pi * 180
-            # winkellaenge der anzeige immer positiv 0 - 360deg
-            # min wert + umskalierter wert
+
             value = (float(math.fmod(angle - self.scale_angle_start_value + 720, 360)) / \
                      (float(self.scale_angle_size) / float(self.value_max - self.value_min))) + self.value_min
             temp = value
@@ -733,8 +703,8 @@ class AnalogGaugeWidget(QWidget):
                     value <= \
                     (self.value + (self.value_max - self.value_min) * self.value_needle_snapzone):
                 self.NeedleColor = self.NeedleColorDrag
-                # todo: evtl ueberpruefen
-                #
+
+
                 state = 9
                 # if value >= self.value_max and self.last_value < (self.value_max - self.value_min) / 2:
                 if value >= self.value_max and self.last_value < (self.value_max - self.value_min) / 2:
@@ -751,231 +721,3 @@ class AnalogGaugeWidget(QWidget):
                     state = 3
                     self.last_value = value
                     self.valueChanged.emit(int(value))
-
-                # todo: mouse event debug output
-
-                # self.update_value(value, mouse_controlled=True)
-
-                # self.valueChanged.emit(int(value))
-                # print(str(int(value)))
-            # self.valueChanged.emit()
-
-            # todo: convert print to logging debug
-            # print('mouseMoveEvent: x=%d, y=%d, a=%s, v=%s, fmod=%s, temp=%s, state=%s' % (
-            #     x, y, angle, value, fmod, temp, state))
-
-
-
-
-    # def createPoly(self, n, r, s):
-    #     polygon = QPolygonF()
-    #
-    #     w = 360/n                                                       # angle per step
-    #     for i in range(n):                                              # add the points of polygon
-    #         t = w*i + s
-    #         x = r*math.cos(math.radians(t))
-    #         y = r*math.sin(math.radians(t))
-    #         # polygon.append(QtCore.QPointF(self.width()/2 +x, self.height()/2 + y))
-    #         polygon.append(QtCore.QPointF(x, y))
-    #
-    #     return polygon
-
-
-
-
-################################################################################################
-# DEMO Routine
-# required: analoggaugewidget_demo.ui
-# compile analoggaugewidget_demo.ui -> analoggaugewidget_demo_ui.py
-# show a lot of variables and possibilities formodification
-################################################################################################
-if __name__ == '__main__':
-    def main():
-        import sys
-        app = QApplication(sys.argv)
-        my_gauge = AnalogGaugeWidget()
-        my_gauge.show()
-        sys.exit(app.exec_())
-
-    class mainclass():
-
-        def __init__(self):
-            import os  # Used in Testing Script
-            import sys
-
-            if used_Qt_Version == 4:
-                print("Compile QUI for Qt Version: " + str(used_Qt_Version))
-                os.system("pyuic4 -o analoggaugewidget_demo_ui.py analoggaugewidget_demo.ui")
-            elif used_Qt_Version == 5:
-                print("Compile QUI for Qt Version: " + str(used_Qt_Version))
-                os.system("pyuic5 -o analoggaugewidget_demo_ui.py analoggaugewidget_demo.ui")
-
-            from analoggaugewidget_demo_ui import Ui_MainWindow
-
-            self.app = QApplication(sys.argv)
-            window = QMainWindow()
-            self.my_gauge = Ui_MainWindow()
-            self.my_gauge.setupUi(window)
-            window.show()
-            self.my_gauge.widget.enable_barGraph = True
-
-            self.my_gauge.widget.value_needle_snapzone = 1
-
-            self.my_gauge.widget.value_min = 0
-            self.my_gauge.widget.value_max = 1100
-            self.my_gauge.widget.scala_main_count = 11
-            self.my_gauge.ActualSlider.setMaximum(self.my_gauge.widget.value_max)
-            self.my_gauge.ActualSlider.setMinimum(self.my_gauge.widget.value_min)
-            self.my_gauge.AussenRadiusSlider.setValue(self.my_gauge.widget.gauge_color_outer_radius_factor * 1000)
-            self.my_gauge.InnenRadiusSlider.setValue(self.my_gauge.widget.gauge_color_inner_radius_factor * 1000)
-
-            self.my_gauge.GaugeStartSlider.setValue(self.my_gauge.widget.scale_angle_start_value)
-            self.my_gauge.GaugeSizeSlider.setValue(self.my_gauge.widget.scale_angle_size)
-
-            # set Start Value
-            # self.my_gauge.widget.update_value(self.my_gauge.widget.value_min)
-            self.my_gauge.widget.update_value(int(self.my_gauge.widget.value_max - self.my_gauge.widget.value_min)/2)
-
-            ################################################################################################
-            # Anzeigenadel Farbe anpassen
-            # auf Slider Aenderung reagieren
-            self.my_gauge.RedSlider_Needle.valueChanged.connect(self.set_NeedleColor)
-            self.my_gauge.GreenSlider_Needle.valueChanged.connect(self.set_NeedleColor)
-            self.my_gauge.BlueSlider_Needle.valueChanged.connect(self.set_NeedleColor)
-            self.my_gauge.TrancSlider_Needle.valueChanged.connect(self.set_NeedleColor)
-
-            # LCD Default Werte festlegen
-            self.my_gauge.lcdNumber_Red_Needle.display(self.my_gauge.RedSlider_Needle.value())
-            self.my_gauge.lcdNumber_Green_Needle.display(self.my_gauge.GreenSlider_Needle.value())
-            self.my_gauge.lcdNumber_Blue_Needle.display(self.my_gauge.RedSlider_Needle.value())
-            self.my_gauge.lcdNumber_Trancparency_Needle.display(self.my_gauge.TrancSlider_Needle.value())
-
-            ################################################################################################
-            # Anzeigenadel Farbe anpassen bei manueller Beswegung
-            # auf Slider Aenderung reagieren
-            self.my_gauge.RedSlider_NeedleDrag.valueChanged.connect(self.set_NeedleColorDrag)
-            self.my_gauge.GreenSlider_NeedleDrag.valueChanged.connect(self.set_NeedleColorDrag)
-            self.my_gauge.BlueSlider_NeedleDrag.valueChanged.connect(self.set_NeedleColorDrag)
-            self.my_gauge.TrancSlider_NeedleDrag.valueChanged.connect(self.set_NeedleColorDrag)
-
-            # LCD Default Werte festlegen
-            self.my_gauge.lcdNumber_Red_NeedleDrag.display(self.my_gauge.RedSlider_NeedleDrag.value())
-            self.my_gauge.lcdNumber_Green_NeedleDrag.display(self.my_gauge.GreenSlider_NeedleDrag.value())
-            self.my_gauge.lcdNumber_Blue_NeedleDrag.display(self.my_gauge.BlueSlider_NeedleDrag.value())
-            self.my_gauge.lcdNumber_Trancparency_NeedleDrag.display(self.my_gauge.TrancSlider_NeedleDrag.value())
-
-
-            ################################################################################################
-            # Skala Text Farbe anpassen
-            # auf Slider Aenderung reagieren
-            self.my_gauge.RedSlider_Scale.valueChanged.connect(self.set_ScaleValueColor)
-            self.my_gauge.GreenSlider_Scale.valueChanged.connect(self.set_ScaleValueColor)
-            self.my_gauge.BlueSlider_Scale.valueChanged.connect(self.set_ScaleValueColor)
-            self.my_gauge.TrancSlider_Scale.valueChanged.connect(self.set_ScaleValueColor)
-
-            # LCD Default Werte festlegen
-            self.my_gauge.lcdNumber_Red_Scale.display(self.my_gauge.RedSlider_Scale.value())
-            self.my_gauge.lcdNumber_Green_Scale.display(self.my_gauge.GreenSlider_Scale.value())
-            self.my_gauge.lcdNumber_Blue_Scale.display(self.my_gauge.BlueSlider_Scale.value())
-            self.my_gauge.lcdNumber_Trancparency_Scale.display(self.my_gauge.TrancSlider_Scale.value())
-
-
-            ################################################################################################
-            # Display Text Farbe anpassen
-            # auf Slider Aenderung reagieren
-            self.my_gauge.RedSlider_Display.valueChanged.connect(self.set_DisplayValueColor)
-            self.my_gauge.GreenSlider_Display.valueChanged.connect(self.set_DisplayValueColor)
-            self.my_gauge.BlueSlider_Display.valueChanged.connect(self.set_DisplayValueColor)
-            self.my_gauge.TrancSlider_Display.valueChanged.connect(self.set_DisplayValueColor)
-
-            # LCD Default Werte festlegen
-            self.my_gauge.lcdNumber_Red_Display.display(self.my_gauge.RedSlider_Display.value())
-            self.my_gauge.lcdNumber_Green_Display.display(self.my_gauge.GreenSlider_Display.value())
-            self.my_gauge.lcdNumber_Blue_Display.display(self.my_gauge.BlueSlider_Display.value())
-            self.my_gauge.lcdNumber_Trancparency_Display.display(self.my_gauge.TrancSlider_Display.value())
-
-
-            self.my_gauge.CB_barGraph.stateChanged.connect(self.en_disable_barGraph)
-            self.my_gauge.CB_ValueText.stateChanged.connect(self.en_disable_ValueText)
-            self.my_gauge.CB_CenterPoint.stateChanged.connect(self.en_disable_CB_CenterPoint)
-            self.my_gauge.CB_ScaleText.stateChanged.connect(self.en_disable_ScaleText)
-            self.my_gauge.CB_ShowBarGraph.stateChanged.connect(self.set_enable_filled_Polygon)
-
-
-            self.my_gauge.CB_Grid.stateChanged.connect(self.set_enable_Scale_Grid)
-            self.my_gauge.CB_fineGrid.stateChanged.connect(self.set_enable_fine_Scale_Grid)
-
-            self.my_gauge.CB_Needle.stateChanged.connect(self.en_disable_Needle)
-
-            # my_gauge.widget.set_scale_polygon_colors([[.0, Qt.transparent]])
-            # my_gauge.widget.set_scale_polygon_colors([[.0, Qt.yellow]])
-            # my_gauge.widget.set_scale_polygon_colors(None)
-            # my_gauge.widget.enable_filled_Polygon = False
-            sys.exit(self.app.exec_())
-
-        def set_NeedleColor(self):
-            #print(self.my_gauge.RedSlider.value())
-            R = self.my_gauge.RedSlider_Needle.value()
-            G = self.my_gauge.GreenSlider_Needle.value()
-            B = self.my_gauge.BlueSlider_Needle.value()
-            Transparency = self.my_gauge.TrancSlider_Needle.value()
-            # print(R, G, B, Transparency)
-            self.my_gauge.widget.set_NeedleColor(R=R, G=G, B=B, Transparency=Transparency)
-
-        def set_NeedleColorDrag(self):
-            #print(self.my_gauge.RedSlider.value())
-            R = self.my_gauge.RedSlider_NeedleDrag.value()
-            G = self.my_gauge.GreenSlider_NeedleDrag.value()
-            B = self.my_gauge.BlueSlider_NeedleDrag.value()
-            Transparency = self.my_gauge.TrancSlider_NeedleDrag.value()
-            # print(R, G, B, Transparency)
-            self.my_gauge.widget.set_NeedleColorDrag(R=R, G=G, B=B, Transparency=Transparency)
-
-
-        def set_ScaleValueColor(self):
-            #print(self.my_gauge.RedSlider.value())
-            R = self.my_gauge.RedSlider_Scale.value()
-            G = self.my_gauge.GreenSlider_Scale.value()
-            B = self.my_gauge.BlueSlider_Scale.value()
-            Transparency = self.my_gauge.TrancSlider_Scale.value()
-            # print(R, G, B, Transparency)
-            self.my_gauge.widget.set_ScaleValueColor(R=R, G=G, B=B, Transparency=Transparency)
-
-        def set_DisplayValueColor(self):
-            # print(self.my_gauge.RedSlider.value())
-            R = self.my_gauge.RedSlider_Display.value()
-            G = self.my_gauge.GreenSlider_Display.value()
-            B = self.my_gauge.BlueSlider_Display.value()
-            Transparency = self.my_gauge.TrancSlider_Display.value()
-            # print(R, G, B, Transparency)
-            self.my_gauge.widget.set_DisplayValueColor(R=R, G=G, B=B, Transparency=Transparency)
-
-        def en_disable_barGraph(self):
-            self.my_gauge.widget.set_enable_barGraph(self.my_gauge.CB_barGraph.isChecked())
-
-        def en_disable_ValueText(self):
-            self.my_gauge.widget.set_enable_value_text(self.my_gauge.CB_ValueText.isChecked())
-
-        def en_disable_CB_CenterPoint(self):
-            self.my_gauge.widget.set_enable_CenterPoint(self.my_gauge.CB_CenterPoint.isChecked())
-
-        def en_disable_Needle(self):
-            self.my_gauge.widget.set_enable_Needle_Polygon(self.my_gauge.CB_Needle.isChecked())
-
-        def en_disable_ScaleText(self):
-            self.my_gauge.widget.set_enable_ScaleText(self.my_gauge.CB_ScaleText.isChecked())
-
-        def set_enable_filled_Polygon(self):
-            self.my_gauge.widget.set_enable_filled_Polygon(self.my_gauge.CB_ShowBarGraph.isChecked())
-
-        def set_enable_Scale_Grid(self):
-            self.my_gauge.widget.set_enable_big_scaled_grid(self.my_gauge.CB_Grid.isChecked())
-
-        def set_enable_fine_Scale_Grid(self):
-            self.my_gauge.widget.set_enable_fine_scaled_marker(self.my_gauge.CB_fineGrid.isChecked())
-
-
-    ############################################
-    # Run DEMO Routine
-    ############################################
-    main = mainclass()
