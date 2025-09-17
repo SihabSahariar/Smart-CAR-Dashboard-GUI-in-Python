@@ -628,7 +628,7 @@ class Ui_MainWindow(object):
 
         coordinate = (24.413274773214205, 88.96567734902074)
         m = folium.Map(
-            tiles='Stamen Terrain',
+            tiles='OpenStreetMap',
             zoom_start=10,
             location=coordinate
         )

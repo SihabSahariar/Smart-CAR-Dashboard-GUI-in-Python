@@ -24,14 +24,43 @@ Welcome to the Car Dashboard (HMI) prototype project! This simple yet intuitive 
 
 7. **Camera Streaming**
    - Access live camera feeds for improved awareness and safety.
-   - 
+
+## Development
+
+1. Create a Python virtual environment (optional but recommended):
+```bash
+$ python3 -m venv .venv
+```
+
+2. Activate the Python virtual environment:
+   1. For Linux or MacOS
+    ```bash
+    $ source .venv/bin/activate
+    ```
+   2. For Windows
+    ```bash
+    $ .\.venv\Scripts\activate
+    ```
+
+## Prerequisites
+
+Install the mandatory dependencies using the following command:
+```bash
+$ pip install -r requirements.txt
+```
+
+## Execute
+Run the application:
+```bash
+$ python app.py
+```
+
 ## Screenshot
 
 <img src = "ss/1.PNG">
 <img src = "ss/2.PNG">
 <img src = "ss/3.PNG">
 <img src = "ss/4.PNG">
-
 
 ## Todo
 
