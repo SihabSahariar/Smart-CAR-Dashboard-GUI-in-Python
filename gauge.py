@@ -2,48 +2,15 @@
 
 import math
 
-try:
-    from PyQt4.QtGui import QMainWindow
-    from PyQt4.QtGui import QWidget
-    from PyQt4.QtGui import QApplication
-    from PyQt4.QtGui import QPolygon, QPolygonF, QColor, QPen, QFont
-    from PyQt4.QtGui import QPainter, QFontMetrics, QConicalGradient
-    # QtGui -> QPolygon, QPolygonF, QColor, QPen, QFont,
-    #       -> QWidget
-    #       -> QApplication
-
-    from PyQt4.QtCore import Qt, QTime, QTimer, QPoint, QPointF, SIGNAL, QRect, QSize
-    from PyQt4.QtCore import QObject, pyqtSignal
-    # QtCore -> Qt.NoPen, QTime, QTimer, QPoint, QPointF, QRect, QSize
-    used_Qt_Version = 4
-    print("Successful import Qt4 @ gauge.py")
-    # Antialysing may be problem with Qt4
-    print("ToDo: Fix error output QPainter.Antialiasing")
-
-except:
-    try:
-        # print("Try5: analoggaugewidget.py")
-        from PyQt5.QtWidgets import QMainWindow
-
-        from PyQt5.QtWidgets import QWidget
-        from PyQt5.QtWidgets import QApplication
-        # QtWidgets -> QWidget
-        # QtWidgets -> QApplication
-
-        from PyQt5.QtGui import QPolygon, QPolygonF, QColor, QPen, QFont
-        from PyQt5.QtGui import QPainter, QFontMetrics, QConicalGradient
-        # QtGui -> QPolygon, QPolygonF, QColor, QPen, QFont, QPainter, QFontMetrics, QConicalGradient
-
-        from PyQt5.QtCore import Qt ,QTime, QTimer, QPoint, QPointF, QRect, QSize
-        from PyQt5.QtCore import QObject, pyqtSignal
-        # QtCore -> Qt.NoPen ,QTime, QTimer, QPoint, QPointF, QRect, QSize
-
-        used_Qt_Version = 5
-        print("Successful import Qt5 @ gauge.py")
-    except:
-        print("Error Import Qt 4 & 5 @ analoggaugewidget.py")
-        exit()
-
+# PyQt5 Core
+from PyQt5.QtCore import Qt, QTimer, QPoint, QPointF, QRect, QSize, QObject, pyqtSignal
+# PyQt5 GUI
+from PyQt5.QtGui import (
+    QPolygon, QPolygonF, QColor, QPen, QFont,
+    QPainter, QFontMetrics, QConicalGradient
+)
+# PyQt5 Widgets
+from PyQt5.QtWidgets import QWidget
 
 
 class AnalogGaugeWidget(QWidget):
