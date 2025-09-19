@@ -345,28 +345,28 @@ class AnalogGaugeWidget(QWidget):
     # Painter
     ###############################################################################################
 
-    def create_polygon_pie(self, outer_radius, inner_raduis, start, lenght):
+    def create_polygon_pie(self, outer_radius, inner_radius, start, length):
         polygon_pie = QPolygonF()
         n = 360     # angle steps size for full circle
         # changing n value will causes drawing issues
         w = 360 / n   # angle per step
-        # create outer circle line from "start"-angle to "start + lenght"-angle
+        # create outer circle line from "start"-angle to "start + length"-angle
         x = 0
         y = 0
 
         if not self.enable_barGraph:
-            lenght = int(round((lenght / (self.value_max - self.value_min)) * (self.value - self.value_min)))
+            length = int(round((length / (self.value_max - self.value_min)) * (self.value - self.value_min)))
 
-        for i in range(lenght+1):                                              # add the points of polygon
+        for i in range(length+1):                                              # add the points of polygon
             t = w * i + start - self.angle_offset
             x = outer_radius * math.cos(math.radians(t))
             y = outer_radius * math.sin(math.radians(t))
             polygon_pie.append(QPointF(x, y))
-        # create inner circle line from "start + lenght"-angle to "start"-angle
-        for i in range(lenght+1):                                              # add the points of polygon
-            t = w * (lenght - i) + start - self.angle_offset
-            x = inner_raduis * math.cos(math.radians(t))
-            y = inner_raduis * math.sin(math.radians(t))
+        # create inner circle line from "start + length"-angle to "start"-angle
+        for i in range(length+1):                                              # add the points of polygon
+            t = w * (length - i) + start - self.angle_offset
+            x = inner_radius * math.cos(math.radians(t))
+            y = inner_radius * math.sin(math.radians(t))
             polygon_pie.append(QPointF(x, y))
 
         # close outer line
@@ -393,8 +393,8 @@ class AnalogGaugeWidget(QWidget):
             grad = QConicalGradient(QPointF(0, 0),
                                     - self.scale_angle_size - self.scale_angle_start_value + self.angle_offset - 1)
 
-            for eachcolor in self.scale_polygon_colors:
-                grad.setColorAt(eachcolor[0], eachcolor[1])
+            for polygon_color in self.scale_polygon_colors:
+                grad.setColorAt(polygon_color[0], polygon_color[1])
             # grad.setColorAt(.00, Qt.red)
             # grad.setColorAt(.1, Qt.yellow)
             # grad.setColorAt(.15, Qt.green)
@@ -416,9 +416,9 @@ class AnalogGaugeWidget(QWidget):
         my_painter.rotate(self.scale_angle_start_value - self.angle_offset)
         steps_size = (float(self.scale_angle_size) / float(self.scala_main_count))
         scale_line_outer_start = self.widget_diameter // 2
-        scale_line_lenght = int(self.widget_diameter / 2 - self.widget_diameter / 20)
+        scale_line_length = int(self.widget_diameter / 2 - self.widget_diameter / 20)
         for i in range(self.scala_main_count+1):
-            my_painter.drawLine(scale_line_lenght, 0, scale_line_outer_start, 0)
+            my_painter.drawLine(scale_line_length, 0, scale_line_outer_start, 0)
             my_painter.rotate(steps_size)
 
     def create_scale_marker_values_text(self):
@@ -460,9 +460,9 @@ class AnalogGaugeWidget(QWidget):
         my_painter.rotate(self.scale_angle_start_value - self.angle_offset)
         steps_size = (float(self.scale_angle_size) / float(self.scala_main_count * self.scala_subdiv_count))
         scale_line_outer_start = self.widget_diameter // 2
-        scale_line_lenght = int(self.widget_diameter / 2 - self.widget_diameter / 40)
+        scale_line_length = int(self.widget_diameter / 2 - self.widget_diameter / 40)
         for i in range((self.scala_main_count * self.scala_subdiv_count)+1):
-            my_painter.drawLine(scale_line_lenght, 0, scale_line_outer_start, 0)
+            my_painter.drawLine(scale_line_length, 0, scale_line_outer_start, 0)
             my_painter.rotate(steps_size)
 
     def create_values_text(self):

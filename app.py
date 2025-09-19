@@ -666,7 +666,7 @@ class Ui_MainWindow(object):
         self.webcam.setGeometry(QRect(500, 40, 321, 331))
 
         MainWindow.setCentralWidget(self.centralwidget)
-        self.show_Dash()
+        self.show_dashboard()
         self.progress()
         self.retranslateUi(MainWindow)
         QMetaObject.connectSlotsByName(MainWindow)
@@ -740,12 +740,12 @@ class Ui_MainWindow(object):
         self.pushButton_5.setText(_translate("MainWindow", "Start"))
         self.pushButton_6.setText(_translate("MainWindow", "Stop"))
         # btn function
-        self.btn_dash.clicked.connect(self.show_Dash)
+        self.btn_dash.clicked.connect(self.show_dashboard)
         self.btn_ac.clicked.connect(self.show_AC)
         self.btn_music.clicked.connect(self.show_Music)
         self.btn_map.clicked.connect(self.show_Map)
 
-    def show_Dash(self):
+    def show_dashboard(self):
         self.quit_cam
         self.frame_dashboard.setVisible(True)
         self.frame_AC.setVisible(False)
