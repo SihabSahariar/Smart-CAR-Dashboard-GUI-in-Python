@@ -691,10 +691,13 @@ class Ui_MainWindow(object):
 
     def quit_cam(self):
         self.timer.stop()
-        cap.release()
+        # TODO: using globals() to avoid application crash might be not the most elegant solution (re-design???).
+        if "cap" in globals():
+            cap.release()
 
     def controlTimer(self):
         global cap
+        # TODO: this method toggles the timer state, is it really needed, what is the scenario?
         if self.timer.isActive():
             self.quit_cam()
         else:
@@ -745,29 +748,35 @@ class Ui_MainWindow(object):
         self.btn_map.clicked.connect(self.show_Map)
 
     def show_dashboard(self):
-        self.quit_cam
+        if self.frame_dashboard.isVisible():
+            return
+        self.quit_cam()
         self.frame_dashboard.setVisible(True)
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(False)
         self.frame_map.setVisible(False)
-        self.timer.stop
 
     def show_AC(self):
-        self.quit_cam
+        if self.frame_AC.isVisible():
+            return
+        self.quit_cam()
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(True)
         self.frame_music.setVisible(False)
         self.frame_map.setVisible(False)
 
     def show_Music(self):
-        self.quit_cam
+        if self.frame_music.isVisible():
+            return
+        self.quit_cam()
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(True)
         self.frame_map.setVisible(False)
-        self.quit_cam
 
     def show_Map(self):
+        if self.frame_map.isVisible():
+            return
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(False)
