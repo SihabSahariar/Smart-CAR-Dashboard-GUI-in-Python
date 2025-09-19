@@ -1,6 +1,7 @@
 # Developed By Sihab Sahariar
 import io
 import sys
+import argparse
 
 # import OpenCV module
 import cv2
@@ -26,6 +27,9 @@ from qtwidgets import AnimatedToggle
 
 
 class Ui_MainWindow(object):
+    def __init__(self, video_path=None):
+        self.video_path = video_path
+    
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setFixedSize(1117, 636)
@@ -659,7 +663,7 @@ class Ui_MainWindow(object):
         global timer
         self.timer = QTimer()
         # set timer timeout callback function
-        self.timer.timeout.connect(self.viewCam)
+        self.timer.timeout.connect(self.view_video)
 
         self.webcam = QLabel(self.frame_map)
         self.webcam.setObjectName(u"webcam")
@@ -681,7 +685,7 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
-    def viewCam(self):
+    def view_video(self):
         ret, image = cap.read()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width, channel = image.shape
@@ -689,7 +693,7 @@ class Ui_MainWindow(object):
         qImg = QImage(image.data, width, height, step, QImage.Format_RGB888)
         self.webcam.setPixmap(QPixmap.fromImage(qImg))
 
-    def quit_cam(self):
+    def quit_video(self):
         self.timer.stop()
         # TODO: using globals() to avoid application crash might be not the most elegant solution (re-design???).
         if "cap" in globals():
@@ -699,9 +703,13 @@ class Ui_MainWindow(object):
         global cap
         # TODO: this method toggles the timer state, is it really needed, what is the scenario?
         if self.timer.isActive():
-            self.quit_cam()
+            self.quit_video()
         else:
-            cap = cv2.VideoCapture(0)
+            # Use video file if provided, otherwise use camera device 0
+            if self.video_path:
+                cap = cv2.VideoCapture(self.video_path)
+            else:
+                cap = cv2.VideoCapture(0)
             self.timer.start(20)
 
     def retranslateUi(self, MainWindow):
@@ -750,7 +758,7 @@ class Ui_MainWindow(object):
     def show_dashboard(self):
         if self.frame_dashboard.isVisible():
             return
-        self.quit_cam()
+        self.quit_video()
         self.frame_dashboard.setVisible(True)
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(False)
@@ -759,7 +767,7 @@ class Ui_MainWindow(object):
     def show_AC(self):
         if self.frame_AC.isVisible():
             return
-        self.quit_cam()
+        self.quit_video()
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(True)
         self.frame_music.setVisible(False)
@@ -768,7 +776,7 @@ class Ui_MainWindow(object):
     def show_Music(self):
         if self.frame_music.isVisible():
             return
-        self.quit_cam()
+        self.quit_video()
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(True)
@@ -821,9 +829,14 @@ class Ui_MainWindow(object):
 import resources
 
 if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description='Smart Car Dashboard GUI')
+    parser.add_argument('--play-video', metavar='path', type=str, help='[Optional] path to video file to play instead of camera')
+    args = parser.parse_args()
+    
     app = QApplication(sys.argv)
     MainWindow = QMainWindow()
-    ui = Ui_MainWindow()
+    ui = Ui_MainWindow(video_path=args.play_video)
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())

@@ -25,6 +25,9 @@ Welcome to the Car Dashboard (HMI) prototype project! This simple yet intuitive 
 7. **Camera Streaming**
    - Access live camera feeds for improved awareness and safety.
 
+8. **Prerecorded Video Streaming**
+   - When camera is unavailable (i.e., during development or demos), you can play video instead.
+
 ## Development
 
 1. Create a Python virtual environment (optional but recommended):
@@ -53,6 +56,21 @@ $ pip install -r requirements.txt
 Run the application:
 ```bash
 $ python app.py
+```
+or
+```bash
+$ python app.py --play-video /path/to/your/video.mp4
+```
+Use `--help` to display the available options
+```console
+$ python app.py --help
+usage: app.py [-h] [--play-video path]
+
+Smart Car Dashboard GUI
+
+options:
+  -h, --help         show this help message and exit
+  --play-video path  [Optional] path to video file to play instead of camera
 ```
 
 ## Screenshot
