@@ -1,4 +1,4 @@
-#Developed By Sihab Sahariar
+# Developed By Sihab Sahariar
 import io
 import sys
 
@@ -482,7 +482,7 @@ class Ui_MainWindow(object):
 "}")
         self.label_21.setAlignment(Qt.AlignCenter)
         self.label_21.setObjectName("label_21")
-        self.checked =AnimatedToggle(self.frame_AC)
+        self.checked = AnimatedToggle(self.frame_AC)
         self.checked.setGeometry(QRect(140, 310, 100, 50))
         self.frame_music = QFrame(self.centralwidget)
         self.frame_music.setGeometry(QRect(70, 120, 971, 411))
@@ -631,7 +631,6 @@ class Ui_MainWindow(object):
         self.frame_map.setFrameShadow(QFrame.Raised)
         self.frame_map.setObjectName("frame_map")
 
-
         coordinate = (24.413274773214205, 88.96567734902074)
         m = folium.Map(
             tiles='OpenStreetMap',
@@ -642,9 +641,6 @@ class Ui_MainWindow(object):
         # save map data to data object
         data = io.BytesIO()
         m.save(data, close_file=False)
-
-        #webView = QWebEngineView(self.frame_map)
-        #webView.setHtml(data.getvalue().decode())
 
         self.map_plot = QWebEngineView(self.frame_map)
         self.map_plot.setHtml(data.getvalue().decode())
@@ -669,7 +665,6 @@ class Ui_MainWindow(object):
         self.webcam.setObjectName(u"webcam")
         self.webcam.setGeometry(QRect(500, 40, 321, 331))
 
-    
         MainWindow.setCentralWidget(self.centralwidget)
         self.show_Dash()
         self.progress()
@@ -686,8 +681,6 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
-
-
     def viewCam(self):
         ret, image = cap.read()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -699,6 +692,7 @@ class Ui_MainWindow(object):
     def quit_cam(self):
         self.timer.stop()
         cap.release()
+
     def controlTimer(self):
         global cap
         if not self.timer.isActive():
@@ -745,13 +739,11 @@ class Ui_MainWindow(object):
         self.label_33.setText(_translate("MainWindow", "02. Mrittu Utpadon Karkhana - Shonar Bangla Circus"))
         self.pushButton_5.setText(_translate("MainWindow", "Start"))
         self.pushButton_6.setText(_translate("MainWindow", "Stop"))
-        #btn function
+        # btn function
         self.btn_dash.clicked.connect(self.show_Dash)
         self.btn_ac.clicked.connect(self.show_AC)
         self.btn_music.clicked.connect(self.show_Music)
         self.btn_map.clicked.connect(self.show_Map)
-
-
 
     def show_Dash(self):
         self.quit_cam
@@ -760,9 +752,6 @@ class Ui_MainWindow(object):
         self.frame_map.setVisible(False)
         self.frame_music.setVisible(False)
         self.timer.stop
-
-
-
 
     def show_AC(self):
         self.quit_cam
@@ -778,6 +767,7 @@ class Ui_MainWindow(object):
         self.frame_map.setVisible(False)
         self.frame_music.setVisible(True)
         self.quit_cam
+
     def show_Map(self):
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(False)
@@ -797,7 +787,6 @@ class Ui_MainWindow(object):
         self.speed.set_enable_filled_Polygon(False)
         self.speed.update_value(65)
 
-
         self.rpm.set_scala_main_count(6)
         self.rpm.set_MaxValue(6)
         self.rpm.set_MinValue(0)
@@ -805,7 +794,6 @@ class Ui_MainWindow(object):
         self.rpm.set_DisplayValueColor(200,200,200)
         self.rpm.set_enable_big_scaled_grid(True)
         self.rpm.set_ScaleValueColor(255,255,255)
-        #self.rpm.set_NeedleColor(155,155,100)
         self.rpm.set_NeedleColorDrag(255,255,255)
         self.rpm.set_CenterPointColor(255,255,255)
 
@@ -831,4 +819,3 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-
