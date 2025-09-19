@@ -695,12 +695,11 @@ class Ui_MainWindow(object):
 
     def controlTimer(self):
         global cap
-        if not self.timer.isActive():
+        if self.timer.isActive():
+            self.quit_cam()
+        else:
             cap = cv2.VideoCapture(0)
             self.timer.start(20)
-        else:
-            self.timer.stop()
-            cap.release()
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
@@ -749,30 +748,30 @@ class Ui_MainWindow(object):
         self.quit_cam
         self.frame_dashboard.setVisible(True)
         self.frame_AC.setVisible(False)
-        self.frame_map.setVisible(False)
         self.frame_music.setVisible(False)
+        self.frame_map.setVisible(False)
         self.timer.stop
 
     def show_AC(self):
         self.quit_cam
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(True)
-        self.frame_map.setVisible(False)
         self.frame_music.setVisible(False)
+        self.frame_map.setVisible(False)
 
     def show_Music(self):
         self.quit_cam
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(False)
-        self.frame_map.setVisible(False)
         self.frame_music.setVisible(True)
+        self.frame_map.setVisible(False)
         self.quit_cam
 
     def show_Map(self):
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(False)
-        self.frame_map.setVisible(True)
         self.frame_music.setVisible(False)
+        self.frame_map.setVisible(True)
         self.controlTimer()
 
     def progress(self):

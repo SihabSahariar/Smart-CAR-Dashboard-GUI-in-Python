@@ -118,12 +118,13 @@ class AnalogGaugeWidget(QWidget):
         else:
             self.widget_diameter = self.height()
 
+        ypos = - int(self.widget_diameter / 2 * self.needle_scale_factor)
         self.change_value_needle_style([QPolygon([
             QPoint(4, 30),
             QPoint(-4, 30),
-            QPoint(-2, - int(self.widget_diameter / 2 * self.needle_scale_factor)),
-            QPoint(0, - int(self.widget_diameter / 2 * self.needle_scale_factor) - 6),
-            QPoint(2, - int(self.widget_diameter / 2 * self.needle_scale_factor))
+            QPoint(-2, ypos),
+            QPoint(0, ypos - 6),
+            QPoint(2, ypos)
         ])])
         # needle = [QPolygon([
         #     QPoint(4, 4),
@@ -326,7 +327,7 @@ class AnalogGaugeWidget(QWidget):
     def set_scale_polygon_colors(self, color_array):
         if 'list' in str(type(color_array)):
             self.scale_polygon_colors = color_array
-        elif color_array == None:
+        elif color_array is None:
             self.scale_polygon_colors = [[.0, Qt.transparent]]
         else:
             self.scale_polygon_colors = [[.0, Qt.transparent]]
@@ -374,35 +375,37 @@ class AnalogGaugeWidget(QWidget):
         return polygon_pie
 
     def draw_filled_polygon(self, outline_pen_with=0):
-        if not self.scale_polygon_colors == None:
-            painter_filled_polygon = QPainter(self)
-            painter_filled_polygon.setRenderHint(QPainter.Antialiasing)
-            painter_filled_polygon.translate(self.width() / 2, self.height() / 2)
-            painter_filled_polygon.setPen(Qt.NoPen)
+        if self.scale_polygon_colors is None:
+            return
 
-            self.pen.setWidth(outline_pen_with)
-            if outline_pen_with > 0:
-                painter_filled_polygon.setPen(self.pen)
+        painter_filled_polygon = QPainter(self)
+        painter_filled_polygon.setRenderHint(QPainter.Antialiasing)
+        painter_filled_polygon.translate(self.width() / 2, self.height() / 2)
+        painter_filled_polygon.setPen(Qt.NoPen)
 
-            colored_scale_polygon = self.create_polygon_pie(
-                ((self.widget_diameter / 2) - (self.pen.width() / 2)) * self.gauge_color_outer_radius_factor,
-                (((self.widget_diameter / 2) - (self.pen.width() / 2)) * self.gauge_color_inner_radius_factor),
-                self.scale_angle_start_value,
-                self.scale_angle_size)
+        self.pen.setWidth(outline_pen_with)
+        if outline_pen_with > 0:
+            painter_filled_polygon.setPen(self.pen)
 
-            grad = QConicalGradient(QPointF(0, 0),
-                                    - self.scale_angle_size - self.scale_angle_start_value + self.angle_offset - 1)
+        colored_scale_polygon = self.create_polygon_pie(
+            ((self.widget_diameter / 2) - (self.pen.width() / 2)) * self.gauge_color_outer_radius_factor,
+            (((self.widget_diameter / 2) - (self.pen.width() / 2)) * self.gauge_color_inner_radius_factor),
+            self.scale_angle_start_value,
+            self.scale_angle_size)
 
-            for polygon_color in self.scale_polygon_colors:
-                grad.setColorAt(polygon_color[0], polygon_color[1])
-            # grad.setColorAt(.00, Qt.red)
-            # grad.setColorAt(.1, Qt.yellow)
-            # grad.setColorAt(.15, Qt.green)
-            # grad.setColorAt(1, Qt.transparent)
-            painter_filled_polygon.setBrush(grad)
-            # self.brush = QBrush(QColor(255, 0, 255, 255))
-            # painter_filled_polygon.setBrush(self.brush)
-            painter_filled_polygon.drawPolygon(colored_scale_polygon)
+        grad = QConicalGradient(QPointF(0, 0),
+                                - self.scale_angle_size - self.scale_angle_start_value + self.angle_offset - 1)
+
+        for polygon_color in self.scale_polygon_colors:
+            grad.setColorAt(polygon_color[0], polygon_color[1])
+        # grad.setColorAt(.00, Qt.red)
+        # grad.setColorAt(.1, Qt.yellow)
+        # grad.setColorAt(.15, Qt.green)
+        # grad.setColorAt(1, Qt.transparent)
+        painter_filled_polygon.setBrush(grad)
+        # self.brush = QBrush(QColor(255, 0, 255, 255))
+        # painter_filled_polygon.setBrush(self.brush)
+        painter_filled_polygon.drawPolygon(colored_scale_polygon)
 
     def draw_big_scaled_markter(self):
         my_painter = QPainter(self)
@@ -567,22 +570,24 @@ class AnalogGaugeWidget(QWidget):
 
     def mouseMoveEvent(self, event):
         x, y = event.x() - (self.width() / 2), event.y() - (self.height() / 2)
-        if not x == 0:
-            angle = math.atan2(y, x) / math.pi * 180
-            value = (float(math.fmod(angle - self.scale_angle_start_value + 720, 360)) /
-                     (float(self.scale_angle_size) / float(self.value_max - self.value_min))) + self.value_min
-            if (self.value - (self.value_max - self.value_min) * self.value_needle_snapzone) <= \
-                    value <= \
-                    (self.value + (self.value_max - self.value_min) * self.value_needle_snapzone):
-                self.NeedleColor = self.NeedleColorDrag
-                if value >= self.value_max and self.last_value < (self.value_max - self.value_min) / 2:
-                    value = self.value_max
-                    self.last_value = self.value_min
-                    self.valueChanged.emit(int(value))
-                elif value >= self.value_max >= self.last_value:
-                    value = self.value_max
-                    self.last_value = self.value_max
-                    self.valueChanged.emit(int(value))
-                else:
-                    self.last_value = value
-                    self.valueChanged.emit(int(value))
+        if x == 0:
+            return
+
+        angle = math.atan2(y, x) / math.pi * 180
+        value = (float(math.fmod(angle - self.scale_angle_start_value + 720, 360)) /
+                 (float(self.scale_angle_size) / float(self.value_max - self.value_min))) + self.value_min
+        if (self.value - (self.value_max - self.value_min) * self.value_needle_snapzone) <= \
+                value <= \
+                (self.value + (self.value_max - self.value_min) * self.value_needle_snapzone):
+            self.NeedleColor = self.NeedleColorDrag
+            if value >= self.value_max and self.last_value < (self.value_max - self.value_min) / 2:
+                value = self.value_max
+                self.last_value = self.value_min
+                self.valueChanged.emit(int(value))
+            elif value >= self.value_max >= self.last_value:
+                value = self.value_max
+                self.last_value = self.value_max
+                self.valueChanged.emit(int(value))
+            else:
+                self.last_value = value
+                self.valueChanged.emit(int(value))
