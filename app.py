@@ -27,6 +27,10 @@ from qtwidgets import AnimatedToggle
 
 
 class Ui_MainWindow(object):
+    # Webcam widget dimensions constants
+    WEBCAM_WIDTH = 321
+    WEBCAM_HEIGHT = 331
+    
     def __init__(self, video_path=None):
         self.video_path = video_path
     
@@ -667,7 +671,7 @@ class Ui_MainWindow(object):
 
         self.webcam = QLabel(self.frame_map)
         self.webcam.setObjectName(u"webcam")
-        self.webcam.setGeometry(QRect(500, 40, 321, 331))
+        self.webcam.setGeometry(QRect(500, 40, self.WEBCAM_WIDTH, self.WEBCAM_HEIGHT))
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.show_dashboard()
@@ -685,12 +689,60 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
-    def view_video(self):
+    def _read_video_frame(self):
+        """Read and validate a video frame from the capture device.
+        
+        Returns:
+            numpy.ndarray: Valid image frame, or None if no valid frame available
+        """
         ret, image = cap.read()
+        
+        # Validate frame
+        if not ret or image is None or image.size == 0:
+            return None
+        
+        return image
+
+    def view_video(self):
+        image = self._read_video_frame()
+
+        # Check if frame is valid
+        if image is None:
+            # Video ended or no frame available
+            if self.video_path:
+                # For video files, restart from beginning (loop)
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                image = self._read_video_frame()
+                if image is None:
+                    # If still no frame, stop the timer
+                    self.quit_video()
+                    return
+            else:
+                # For camera, stop the timer
+                self.quit_video()
+                return
+
+        # Convert color format
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Get current image dimensions
         height, width, channel = image.shape
-        step = channel * width
-        qImg = QImage(image.data, width, height, step, QImage.Format_RGB888)
+
+        # Calculate scaling to fit within target area while maintaining aspect ratio
+        scale_w = self.WEBCAM_WIDTH / width
+        scale_h = self.WEBCAM_HEIGHT / height
+        scale = min(scale_w, scale_h)  # Use smaller scale to fit entirely
+
+        # Calculate new dimensions
+        new_width = int(width * scale)
+        new_height = int(height * scale)
+
+        # Resize the image
+        image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
+        # Create QImage and display
+        step = channel * new_width
+        qImg = QImage(image.data, new_width, new_height, step, QImage.Format_RGB888)
         self.webcam.setPixmap(QPixmap.fromImage(qImg))
 
     def quit_video(self):
