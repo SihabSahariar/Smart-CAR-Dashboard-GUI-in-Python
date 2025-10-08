@@ -1,4 +1,6 @@
-folium==0.12.1
-opencv_python_headless==4.5.1.48
+folium==0.17.0
+opencv-python-headless==4.10.0.84
 PyQt5==5.15.10
-qtwidgets==0.18
+PyQtWebEngine==5.15.7
+qtwidgets==1.1
+qtpy
