@@ -49,28 +49,28 @@ $ python3 -m venv .venv
 
 Install the mandatory dependencies using the following command:
 ```bash
-$ pip install -r requirements.txt
+(.venv) $ pip install -r requirements.txt
 ```
 
 ## Execute
 Run the application:
 ```bash
-$ python app.py
+(.venv) $ python app.py
 ```
 or
 ```bash
-$ python app.py --play-video /path/to/your/video.mp4
+(.venv) $ python app.py --play-video /path/to/your/video.mp4
 ```
 Use `--help` to display the available options
 ```console
-$ python app.py --help
+(.venv) $ python app.py --help
 usage: app.py [-h] [--play-video path]
 
 Smart Car Dashboard GUI
 
 options:
-  -h, --help         show this help message and exit
-  --play-video path  [Optional] path to video file to play instead of camera
+  -h, --help            show this help message and exit
+  --play-video path     [Optional] path to video file to play instead of camera
 ```
 
 ## Screenshot

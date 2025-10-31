@@ -1,4 +1,8 @@
-# Developed By Sihab Sahariar
+__author__ = "Sihab Sahariar"
+__contact__ = "www.github.com/sihabsahariar"
+__credits__ = ["Pavel Bar"]
+__version__ = "1.0.1"
+
 import io
 import sys
 import argparse
@@ -6,7 +10,7 @@ import argparse
 # import OpenCV module
 import cv2
 
-import folium # pip install folium
+import folium
 
 # PyQt5 imports - Core
 from PyQt5.QtCore import QRect, QSize, QTimer, Qt, QCoreApplication, QMetaObject
@@ -671,7 +675,7 @@ class Ui_MainWindow(object):
 
         self.webcam = QLabel(self.frame_map)
         self.webcam.setObjectName(u"webcam")
-        self.webcam.setGeometry(QRect(500, 40, self.WEBCAM_WIDTH, self.WEBCAM_HEIGHT))
+        self.webcam.setGeometry(QRect(500, 40, Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT))
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.show_dashboard()
@@ -689,22 +693,23 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
-    def _read_video_frame(self):
+    @staticmethod
+    def _read_video_frame():
         """Read and validate a video frame from the capture device.
-        
+
         Returns:
             numpy.ndarray: Valid image frame, or None if no valid frame available
         """
         ret, image = cap.read()
-        
+
         # Validate frame
         if not ret or image is None or image.size == 0:
             return None
-        
+
         return image
 
     def view_video(self):
-        image = self._read_video_frame()
+        image = Ui_MainWindow._read_video_frame()
 
         # Check if frame is valid
         if image is None:
@@ -712,7 +717,7 @@ class Ui_MainWindow(object):
             if self.video_path:
                 # For video files, restart from beginning (loop)
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                image = self._read_video_frame()
+                image = Ui_MainWindow._read_video_frame()
                 if image is None:
                     # If still no frame, stop the timer
                     self.quit_video()
@@ -729,8 +734,8 @@ class Ui_MainWindow(object):
         height, width, channel = image.shape
 
         # Calculate scaling to fit within target area while maintaining aspect ratio
-        scale_w = self.WEBCAM_WIDTH / width
-        scale_h = self.WEBCAM_HEIGHT / height
+        scale_w = Ui_MainWindow.WEBCAM_WIDTH / width
+        scale_h = Ui_MainWindow.WEBCAM_HEIGHT / height
         scale = min(scale_w, scale_h)  # Use smaller scale to fit entirely
 
         # Calculate new dimensions
@@ -887,8 +892,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     app = QApplication(sys.argv)
-    MainWindow = QMainWindow()
+    main_app_window = QMainWindow()
     ui = Ui_MainWindow(video_path=args.play_video)
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    ui.setupUi(main_app_window)
+    main_app_window.show()
     sys.exit(app.exec_())

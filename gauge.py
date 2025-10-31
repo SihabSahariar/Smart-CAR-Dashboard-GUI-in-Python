@@ -1,4 +1,7 @@
-# Sihab Sahariar (Fixed, 2023)
+__author__ = "Sihab Sahariar"
+__contact__ = "www.github.com/sihabsahariar"
+__credits__ = ["Pavel Bar"]
+__version__ = "1.0.1"
 
 import math
 
@@ -14,11 +17,7 @@ from PyQt5.QtWidgets import QWidget
 
 
 class AnalogGaugeWidget(QWidget):
-    """Fetches rows from a Bigtable.
-    Args: 
-        none
-    
-    """
+    """Fetches rows from a Bigtable."""
     valueChanged = pyqtSignal(int)
 
     def __init__(self, parent=None):
@@ -139,9 +138,6 @@ class AnalogGaugeWidget(QWidget):
 
         self.scale_fontsize = self.initial_scale_fontsize * self.widget_diameter // 400
         self.value_fontsize = self.initial_value_fontsize * self.widget_diameter // 400
-
-    def creator(self):
-        print("Sihab Sahariar | www.github.com/sihabsahariar")
 
     def change_value_needle_style(self, design):
         # prepared for multiple needle instrument
@@ -277,24 +273,24 @@ class AnalogGaugeWidget(QWidget):
         if not self.use_timer_event:
             self.update()
 
-    def set_MinValue(self, min):
-        if self.value < min:
-            self.value = min
-        if min >= self.value_max:
+    def set_MinValue(self, new_value_min):
+        if self.value < new_value_min:
+            self.value = new_value_min
+        if new_value_min >= self.value_max:
             self.value_min = self.value_max - 1
         else:
-            self.value_min = min
+            self.value_min = new_value_min
 
         if not self.use_timer_event:
             self.update()
 
-    def set_MaxValue(self, max):
-        if self.value > max:
-            self.value = max
-        if max <= self.value_min:
+    def set_MaxValue(self, new_value_max):
+        if self.value > new_value_max:
+            self.value = new_value_max
+        if new_value_max <= self.value_min:
             self.value_max = self.value_min + 1
         else:
-            self.value_max = max
+            self.value_max = new_value_max
 
         if not self.use_timer_event:
             self.update()
