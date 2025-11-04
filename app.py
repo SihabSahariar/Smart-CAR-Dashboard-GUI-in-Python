@@ -5,6 +5,7 @@ __version__ = "1.0.1"
 
 import io
 import sys
+import time
 import argparse
 
 # import OpenCV module
@@ -15,7 +16,7 @@ import folium
 # PyQt5 imports - Core
 from PyQt5.QtCore import QRect, QSize, QTimer, Qt, QCoreApplication, QMetaObject
 # PyQt5 imports - GUI
-from PyQt5.QtGui import QPixmap, QImage, QFont
+from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen
 # PyQt5 imports - Widgets
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QLabel, QFrame, QPushButton,
@@ -693,6 +694,31 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
+    def display_error_message(self, message):
+        """Display error message in the video area with proper styling."""
+        # Create a QPixmap with the same dimensions as the webcam area
+        error_pixmap = QPixmap(Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT)
+        error_pixmap.fill(Qt.black)  # Black background to match the UI
+
+        # Draw the error message on the pixmap
+        painter = QPainter(error_pixmap)
+        painter.setPen(QPen(Qt.red, 2))
+        painter.setFont(QFont("Arial", 12, QFont.Bold))
+
+        # Draw border
+        painter.drawRect(2, 2, Ui_MainWindow.WEBCAM_WIDTH - 4, Ui_MainWindow.WEBCAM_HEIGHT - 4)
+
+        # Draw error message in center
+        painter.setPen(QPen(Qt.white, 1))
+        text_rect = error_pixmap.rect()
+        text_rect.adjust(10, 0, -10, 0)  # Add some margin
+        painter.drawText(text_rect, Qt.AlignCenter | Qt.TextWordWrap, message)
+
+        painter.end()
+
+        # Set the error pixmap to the webcam label
+        self.webcam.setPixmap(error_pixmap)
+
     @staticmethod
     def _read_video_frame():
         """Read and validate a video frame from the capture device.
@@ -709,6 +735,7 @@ class Ui_MainWindow(object):
         return image
 
     def view_video(self):
+        """Displays camera / video stream and handles errors."""
         image = Ui_MainWindow._read_video_frame()
 
         # Check if frame is valid
@@ -719,11 +746,13 @@ class Ui_MainWindow(object):
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 image = Ui_MainWindow._read_video_frame()
                 if image is None:
-                    # If still no frame, stop the timer
+                    # If still no frame, show error and stop the timer
+                    self.display_error_message("Video file is unavailable or corrupted!\n\nPlease check video file.")
                     self.quit_video()
                     return
             else:
-                # For camera, stop the timer
+                # For camera, show error and stop the timer
+                self.display_error_message("Camera is unavailable!\n\nPlease check camera connection.")
                 self.quit_video()
                 return
 
@@ -767,6 +796,8 @@ class Ui_MainWindow(object):
                 cap = cv2.VideoCapture(self.video_path)
             else:
                 cap = cv2.VideoCapture(0)
+                # Give camera time to initialize for better robustness
+                time.sleep(0.1)
             self.timer.start(20)
 
     def retranslateUi(self, MainWindow):

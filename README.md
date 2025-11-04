@@ -24,9 +24,11 @@ Welcome to the Car Dashboard (HMI) prototype project! This simple yet intuitive 
 
 7. **Camera Streaming**
    - Access live camera feeds for improved awareness and safety.
+   - Handles camera failures (camera is unavailable or gets disconnected during use).
 
 8. **Prerecorded Video Streaming**
    - When camera is unavailable (i.e., during development or demos), you can play video instead.
+   - Handles video file failures (file doesn't exist or video stream gets interrupted/corrupted).
 
 ## Development
 
@@ -79,6 +81,7 @@ options:
 <img src = "ss/2.PNG">
 <img src = "ss/3.PNG">
 <img src = "ss/4.PNG">
+<img src = "ss/5.PNG">
 
 ## Todo
 
