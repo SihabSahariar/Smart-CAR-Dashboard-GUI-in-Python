@@ -32,21 +32,25 @@ from qtwidgets import AnimatedToggle
 
 
 class Ui_MainWindow(object):
+    # Main window dimensions constants
+    WINDOW_WIDTH = 1117
+    WINDOW_HEIGHT = 636
+
     # Webcam widget dimensions constants
     WEBCAM_WIDTH = 321
     WEBCAM_HEIGHT = 331
-    
+
     def __init__(self, video_path=None):
         self.video_path = video_path
-    
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setFixedSize(1117, 636)
+        MainWindow.setFixedSize(Ui_MainWindow.WINDOW_WIDTH, Ui_MainWindow.WINDOW_HEIGHT)
         MainWindow.setStyleSheet("background-color: rgb(30, 31, 40);")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.label = QLabel(self.centralwidget)
-        self.label.setGeometry(QRect(0, 0, 1111, 651))
+        self.label.setGeometry(QRect(0, 0, Ui_MainWindow.WINDOW_WIDTH, Ui_MainWindow.WINDOW_HEIGHT))
         self.label.setText("")
         self.label.setPixmap(QPixmap(":/bg/Untitled (1).png"))
         self.label.setScaledContents(True)
@@ -921,10 +925,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Smart Car Dashboard GUI')
     parser.add_argument('--play-video', metavar='path', type=str, help='[Optional] path to video file to play instead of camera')
     args = parser.parse_args()
-    
+
+    # Enable automatic high DPI scaling
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    # Enable crisp rendering on high DPI displays
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    # Disable window context help button
+    QApplication.setAttribute(Qt.AA_DisableWindowContextHelpButton, True)
+
     app = QApplication(sys.argv)
     main_app_window = QMainWindow()
     ui = Ui_MainWindow(video_path=args.play_video)
     ui.setupUi(main_app_window)
+
+    # Center window on screen
+    screen = app.primaryScreen()
+    screen_geometry = screen.geometry()
+    window_geometry = main_app_window.frameGeometry()
+    center_point = screen_geometry.center()
+    window_geometry.moveCenter(center_point)
+    main_app_window.move(window_geometry.topLeft())
+
     main_app_window.show()
     sys.exit(app.exec_())
