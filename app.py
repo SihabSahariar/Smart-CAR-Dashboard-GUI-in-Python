@@ -1,17 +1,22 @@
-# Developed By Sihab Sahariar
+__author__ = "Sihab Sahariar"
+__contact__ = "www.github.com/sihabsahariar"
+__credits__ = ["Pavel Bar"]
+__version__ = "1.0.1"
+
 import io
 import sys
+import time
 import argparse
 
 # import OpenCV module
 import cv2
 
-import folium # pip install folium
+import folium
 
 # PyQt5 imports - Core
 from PyQt5.QtCore import QRect, QSize, QTimer, Qt, QCoreApplication, QMetaObject
 # PyQt5 imports - GUI
-from PyQt5.QtGui import QPixmap, QImage, QFont
+from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen
 # PyQt5 imports - Widgets
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QLabel, QFrame, QPushButton,
@@ -27,21 +32,25 @@ from qtwidgets import AnimatedToggle
 
 
 class Ui_MainWindow(object):
+    # Main window dimensions constants
+    WINDOW_WIDTH = 1117
+    WINDOW_HEIGHT = 636
+
     # Webcam widget dimensions constants
     WEBCAM_WIDTH = 321
     WEBCAM_HEIGHT = 331
-    
+
     def __init__(self, video_path=None):
         self.video_path = video_path
-    
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setFixedSize(1117, 636)
+        MainWindow.setFixedSize(Ui_MainWindow.WINDOW_WIDTH, Ui_MainWindow.WINDOW_HEIGHT)
         MainWindow.setStyleSheet("background-color: rgb(30, 31, 40);")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.label = QLabel(self.centralwidget)
-        self.label.setGeometry(QRect(0, 0, 1111, 651))
+        self.label.setGeometry(QRect(0, 0, Ui_MainWindow.WINDOW_WIDTH, Ui_MainWindow.WINDOW_HEIGHT))
         self.label.setText("")
         self.label.setPixmap(QPixmap(":/bg/Untitled (1).png"))
         self.label.setScaledContents(True)
@@ -671,7 +680,7 @@ class Ui_MainWindow(object):
 
         self.webcam = QLabel(self.frame_map)
         self.webcam.setObjectName(u"webcam")
-        self.webcam.setGeometry(QRect(500, 40, self.WEBCAM_WIDTH, self.WEBCAM_HEIGHT))
+        self.webcam.setGeometry(QRect(500, 40, Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT))
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.show_dashboard()
@@ -689,22 +698,49 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
-    def _read_video_frame(self):
+    def display_error_message(self, message):
+        """Display error message in the video area with proper styling."""
+        # Create a QPixmap with the same dimensions as the webcam area
+        error_pixmap = QPixmap(Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT)
+        error_pixmap.fill(Qt.black)  # Black background to match the UI
+
+        # Draw the error message on the pixmap
+        painter = QPainter(error_pixmap)
+        painter.setPen(QPen(Qt.red, 2))
+        painter.setFont(QFont("Arial", 12, QFont.Bold))
+
+        # Draw border
+        painter.drawRect(2, 2, Ui_MainWindow.WEBCAM_WIDTH - 4, Ui_MainWindow.WEBCAM_HEIGHT - 4)
+
+        # Draw error message in center
+        painter.setPen(QPen(Qt.white, 1))
+        text_rect = error_pixmap.rect()
+        text_rect.adjust(10, 0, -10, 0)  # Add some margin
+        painter.drawText(text_rect, Qt.AlignCenter | Qt.TextWordWrap, message)
+
+        painter.end()
+
+        # Set the error pixmap to the webcam label
+        self.webcam.setPixmap(error_pixmap)
+
+    @staticmethod
+    def _read_video_frame():
         """Read and validate a video frame from the capture device.
-        
+
         Returns:
             numpy.ndarray: Valid image frame, or None if no valid frame available
         """
         ret, image = cap.read()
-        
+
         # Validate frame
         if not ret or image is None or image.size == 0:
             return None
-        
+
         return image
 
     def view_video(self):
-        image = self._read_video_frame()
+        """Displays camera / video stream and handles errors."""
+        image = Ui_MainWindow._read_video_frame()
 
         # Check if frame is valid
         if image is None:
@@ -712,13 +748,15 @@ class Ui_MainWindow(object):
             if self.video_path:
                 # For video files, restart from beginning (loop)
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                image = self._read_video_frame()
+                image = Ui_MainWindow._read_video_frame()
                 if image is None:
-                    # If still no frame, stop the timer
+                    # If still no frame, show error and stop the timer
+                    self.display_error_message("Video file is unavailable or corrupted!\n\nPlease check video file.")
                     self.quit_video()
                     return
             else:
-                # For camera, stop the timer
+                # For camera, show error and stop the timer
+                self.display_error_message("Camera is unavailable!\n\nPlease check camera connection.")
                 self.quit_video()
                 return
 
@@ -729,8 +767,8 @@ class Ui_MainWindow(object):
         height, width, channel = image.shape
 
         # Calculate scaling to fit within target area while maintaining aspect ratio
-        scale_w = self.WEBCAM_WIDTH / width
-        scale_h = self.WEBCAM_HEIGHT / height
+        scale_w = Ui_MainWindow.WEBCAM_WIDTH / width
+        scale_h = Ui_MainWindow.WEBCAM_HEIGHT / height
         scale = min(scale_w, scale_h)  # Use smaller scale to fit entirely
 
         # Calculate new dimensions
@@ -762,6 +800,8 @@ class Ui_MainWindow(object):
                 cap = cv2.VideoCapture(self.video_path)
             else:
                 cap = cv2.VideoCapture(0)
+                # Give camera time to initialize for better robustness
+                time.sleep(0.1)
             self.timer.start(20)
 
     def retranslateUi(self, MainWindow):
@@ -885,10 +925,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Smart Car Dashboard GUI')
     parser.add_argument('--play-video', metavar='path', type=str, help='[Optional] path to video file to play instead of camera')
     args = parser.parse_args()
-    
+
+    # Enable automatic high DPI scaling
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    # Enable crisp rendering on high DPI displays
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    # Disable window context help button
+    QApplication.setAttribute(Qt.AA_DisableWindowContextHelpButton, True)
+
     app = QApplication(sys.argv)
-    MainWindow = QMainWindow()
+    main_app_window = QMainWindow()
     ui = Ui_MainWindow(video_path=args.play_video)
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    ui.setupUi(main_app_window)
+
+    # Center window on screen
+    screen = app.primaryScreen()
+    screen_geometry = screen.geometry()
+    window_geometry = main_app_window.frameGeometry()
+    center_point = screen_geometry.center()
+    window_geometry.moveCenter(center_point)
+    main_app_window.move(window_geometry.topLeft())
+
+    main_app_window.show()
     sys.exit(app.exec_())

@@ -1,4 +1,7 @@
-# Sihab Sahariar (Fixed, 2023)
+__author__ = "Sihab Sahariar"
+__contact__ = "www.github.com/sihabsahariar"
+__credits__ = ["Pavel Bar"]
+__version__ = "1.0.1"
 
 import math
 
@@ -14,11 +17,7 @@ from PyQt5.QtWidgets import QWidget
 
 
 class AnalogGaugeWidget(QWidget):
-    """Fetches rows from a Bigtable.
-    Args: 
-        none
-    
-    """
+    """Fetches rows from a Bigtable."""
     valueChanged = pyqtSignal(int)
 
     def __init__(self, parent=None):
@@ -113,10 +112,7 @@ class AnalogGaugeWidget(QWidget):
         self.rescale_method()
 
     def rescale_method(self):
-        if self.width() <= self.height():
-            self.widget_diameter = self.width()
-        else:
-            self.widget_diameter = self.height()
+        self.widget_diameter = min(self.width(), self.height())
 
         ypos = - int(self.widget_diameter / 2 * self.needle_scale_factor)
         self.change_value_needle_style([QPolygon([
@@ -140,9 +136,6 @@ class AnalogGaugeWidget(QWidget):
         self.scale_fontsize = self.initial_scale_fontsize * self.widget_diameter // 400
         self.value_fontsize = self.initial_value_fontsize * self.widget_diameter // 400
 
-    def creator(self):
-        print("Sihab Sahariar | www.github.com/sihabsahariar")
-
     def change_value_needle_style(self, design):
         # prepared for multiple needle instrument
         self.value_needle = []
@@ -152,12 +145,8 @@ class AnalogGaugeWidget(QWidget):
             self.update()
 
     def update_value(self, value):
-        if value <= self.value_min:
-            self.value = self.value_min
-        elif value >= self.value_max:
-            self.value = self.value_max
-        else:
-            self.value = value
+        # Clamp value between min and max limits
+        self.value = max(self.value_min, min(value, self.value_max))
         self.valueChanged.emit(int(value))
 
         if not self.use_timer_event:
@@ -270,31 +259,26 @@ class AnalogGaugeWidget(QWidget):
             self.update()
 
     def set_scala_main_count(self, count):
-        if count < 1:
-            count = 1
-        self.scala_main_count = count
+        # Ensure count is at least 1
+        self.scala_main_count = max(count, 1)
 
         if not self.use_timer_event:
             self.update()
 
-    def set_MinValue(self, min):
-        if self.value < min:
-            self.value = min
-        if min >= self.value_max:
-            self.value_min = self.value_max - 1
-        else:
-            self.value_min = min
+    def set_MinValue(self, new_value_min):
+        # Ensure value is not below the new minimum
+        self.value = max(self.value, new_value_min)
+        # Update the minimum value, but ensure it stays below the current maximum
+        self.value_min = min(new_value_min, self.value_max - 1)
 
         if not self.use_timer_event:
             self.update()
 
-    def set_MaxValue(self, max):
-        if self.value > max:
-            self.value = max
-        if max <= self.value_min:
-            self.value_max = self.value_min + 1
-        else:
-            self.value_max = max
+    def set_MaxValue(self, new_value_max):
+        # Ensure value doesn't exceed the new maximum
+        self.value = min(self.value, new_value_max)
+        # Update the maximum value, but ensure it stays above the current minimum
+        self.value_max = max(new_value_max, self.value_min + 1)
 
         if not self.use_timer_event:
             self.update()
