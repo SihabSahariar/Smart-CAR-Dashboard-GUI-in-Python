@@ -5,7 +5,6 @@ __version__ = "1.0.1"
 
 import io
 import sys
-import time
 import argparse
 
 # import OpenCV module
@@ -14,7 +13,7 @@ import cv2
 import folium
 
 # PyQt5 imports - Core
-from PyQt5.QtCore import QRect, QSize, QTimer, Qt, QCoreApplication, QMetaObject
+from PyQt5.QtCore import QRect, QSize, Qt, QCoreApplication, QMetaObject, QThread, pyqtSignal
 # PyQt5 imports - GUI
 from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen
 # PyQt5 imports - Widgets
@@ -31,6 +30,101 @@ from gauge import AnalogGaugeWidget
 from qtwidgets import AnimatedToggle
 
 
+class VideoThread(QThread):
+    """
+    Thread for handling video/camera capture operations.
+    This prevents blocking the main UI thread and improves responsiveness.
+    """
+    # Signal emitted when a new frame is captured
+    frame_captured = pyqtSignal(object)  # Emits numpy array
+    # Signal emitted when an error occurs
+    error_occurred = pyqtSignal(str)  # Emits error message
+
+    def __init__(self, video_path=None):
+        super().__init__()
+        self.video_path = video_path
+        self.cap = None
+        self.running = False
+        self._should_stop = False
+
+    def run(self):
+        """Main thread execution - captures and displays video frames continuously."""
+        def read_frame():
+            """Read and validate frame from the capture device. Returns frame, or None if no valid frame available."""
+            ret, frame = self.cap.read()
+            if not ret or frame is None or frame.size == 0:
+                return None
+            return frame
+
+        self.running = True
+        self._should_stop = False
+
+        try:
+            # Initialize video capture (use video file if provided, otherwise use camera device 0)
+            if self.video_path:
+                self.cap = cv2.VideoCapture(self.video_path)
+            else:
+                self.cap = cv2.VideoCapture(0)
+
+            # Check if capture device opened successfully
+            if not self.cap.isOpened():
+                if self.video_path:
+                    self.error_occurred.emit("Video file not found or inaccessible!\n\n"
+                                             "Please check the file path and permissions.")
+                else:
+                    self.error_occurred.emit("Camera not found or inaccessible!\n\n"
+                                             "Please check camera connection and permissions.")
+                self.stop()  # Signal to skip main loop and proceed to cleanup
+
+            # Main capture loop
+            while not self._should_stop:
+                frame = read_frame()
+
+                # Validate frame
+                if frame is None:
+                    # Handle end of video or camera disconnection
+                    if self.video_path:
+                        # For video files, restart the playback from beginning (loop)
+                        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        frame = read_frame()
+                        if frame is None:
+                            # If still no frame, that means it's not EOF, but rather an issue with the video file.
+                            self.error_occurred.emit("Video playback failed!\n\n"
+                                                     "File became inaccessible or frames are corrupted.")
+                            break
+                    else:
+                        # Camera disconnected or failed
+                        self.error_occurred.emit("Camera disconnected or stopped responding!\n\n"
+                                                 "Please check camera connection.")
+                        break
+
+                # Emit the captured frame
+                self.frame_captured.emit(frame)
+
+                # Sleep to control frame rate (~50 FPS max)
+                self.msleep(20)
+
+        except Exception as e:
+            if self.video_path:
+                self.error_occurred.emit(f"Video file error: {str(e)}")
+            else:
+                self.error_occurred.emit(f"Camera error: {str(e)}")
+
+        finally:
+            self.running = False
+            self.cleanup()
+
+    def stop(self):
+        """Request the thread to stop."""
+        self._should_stop = True
+
+    def cleanup(self):
+        """Release camera resources."""
+        if self.cap is not None:
+            self.cap.release()
+            self.cap = None
+
+
 class Ui_MainWindow(object):
     # Main window dimensions constants
     WINDOW_WIDTH = 1117
@@ -42,6 +136,7 @@ class Ui_MainWindow(object):
 
     def __init__(self, video_path=None):
         self.video_path = video_path
+        self.video_thread = None
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -673,10 +768,6 @@ class Ui_MainWindow(object):
         self.pushButton_6.setGeometry(QRect(830, 190, 119, 37))
         sizePolicy.setHeightForWidth(self.pushButton_6.sizePolicy().hasHeightForWidth())
         self.pushButton_6.setSizePolicy(sizePolicy)
-        global timer
-        self.timer = QTimer()
-        # set timer timeout callback function
-        self.timer.timeout.connect(self.view_video)
 
         self.webcam = QLabel(self.frame_map)
         self.webcam.setObjectName(u"webcam")
@@ -723,86 +814,70 @@ class Ui_MainWindow(object):
         # Set the error pixmap to the webcam label
         self.webcam.setPixmap(error_pixmap)
 
-    @staticmethod
-    def _read_video_frame():
-        """Read and validate a video frame from the capture device.
-
-        Returns:
-            numpy.ndarray: Valid image frame, or None if no valid frame available
+    def on_frame_captured(self, frame):
         """
-        ret, image = cap.read()
+        Slot called when a new frame is captured by the video thread.
+        This runs in the main UI thread (Qt automatically handles the thread switch).
+        """
+        try:
+            # Convert color format from BGR to RGB
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # Validate frame
-        if not ret or image is None or image.size == 0:
-            return None
+            # Get current image dimensions
+            height, width, channel = image.shape
 
-        return image
+            # Calculate scaling to fit within target area while maintaining aspect ratio
+            scale_w = Ui_MainWindow.WEBCAM_WIDTH / width
+            scale_h = Ui_MainWindow.WEBCAM_HEIGHT / height
+            scale = min(scale_w, scale_h)  # Use smaller scale to fit entirely
 
-    def view_video(self):
-        """Displays camera / video stream and handles errors."""
-        image = Ui_MainWindow._read_video_frame()
+            # Calculate new dimensions
+            new_width = int(width * scale)
+            new_height = int(height * scale)
 
-        # Check if frame is valid
-        if image is None:
-            # Video ended or no frame available
-            if self.video_path:
-                # For video files, restart from beginning (loop)
-                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                image = Ui_MainWindow._read_video_frame()
-                if image is None:
-                    # If still no frame, show error and stop the timer
-                    self.display_error_message("Video file is unavailable or corrupted!\n\nPlease check video file.")
-                    self.quit_video()
-                    return
-            else:
-                # For camera, show error and stop the timer
-                self.display_error_message("Camera is unavailable!\n\nPlease check camera connection.")
-                self.quit_video()
-                return
+            # Resize the image
+            image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
-        # Convert color format
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # Create QImage and display
+            step = channel * new_width
+            qImg = QImage(image.data, new_width, new_height, step, QImage.Format_RGB888)
+            self.webcam.setPixmap(QPixmap.fromImage(qImg))
+        except Exception as e:
+            self.on_video_error(f"Error displaying frame:\n{str(e)}")
 
-        # Get current image dimensions
-        height, width, channel = image.shape
+    def on_video_error(self, error_message):
+        """
+        Handle video-related errors (from video thread or frame processing).
+        Displays error message and stops video gracefully.
+        This runs in the main UI thread.
+        """
+        self.display_error_message(error_message)
+        self.quit_video()
 
-        # Calculate scaling to fit within target area while maintaining aspect ratio
-        scale_w = Ui_MainWindow.WEBCAM_WIDTH / width
-        scale_h = Ui_MainWindow.WEBCAM_HEIGHT / height
-        scale = min(scale_w, scale_h)  # Use smaller scale to fit entirely
-
-        # Calculate new dimensions
-        new_width = int(width * scale)
-        new_height = int(height * scale)
-
-        # Resize the image
-        image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
-
-        # Create QImage and display
-        step = channel * new_width
-        qImg = QImage(image.data, new_width, new_height, step, QImage.Format_RGB888)
-        self.webcam.setPixmap(QPixmap.fromImage(qImg))
+    def is_video_running(self):
+        """Check if video thread is currently running."""
+        return self.video_thread is not None and self.video_thread.isRunning()
 
     def quit_video(self):
-        self.timer.stop()
-        # TODO: using globals() to avoid application crash might be not the most elegant solution (re-design???).
-        if "cap" in globals():
-            cap.release()
+        """Stop the video thread and clean up resources."""
+        if self.is_video_running():
+            self.video_thread.stop()
+            self.video_thread.wait()  # Wait for thread to finish cleanly
 
     def controlTimer(self):
-        global cap
-        # TODO: this method toggles the timer state, is it really needed, what is the scenario?
-        if self.timer.isActive():
+        """Toggle video capture on/off."""
+        if self.is_video_running():
             self.quit_video()
         else:
-            # Use video file if provided, otherwise use camera device 0
-            if self.video_path:
-                cap = cv2.VideoCapture(self.video_path)
-            else:
-                cap = cv2.VideoCapture(0)
-                # Give camera time to initialize for better robustness
-                time.sleep(0.1)
-            self.timer.start(20)
+            # Create and start the video thread
+            self.video_thread = VideoThread(video_path=self.video_path)
+
+            # Connect signals to slots
+            self.video_thread.frame_captured.connect(self.on_frame_captured)
+            self.video_thread.error_occurred.connect(self.on_video_error)
+
+            # Start the thread
+            self.video_thread.start()
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
