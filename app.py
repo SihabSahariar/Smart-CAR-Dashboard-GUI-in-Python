@@ -6,6 +6,7 @@ __version__ = "1.0.1"
 import io
 import sys
 import argparse
+from datetime import datetime
 
 # import OpenCV module
 import cv2
@@ -13,7 +14,7 @@ import cv2
 import folium
 
 # PyQt5 imports - Core
-from PyQt5.QtCore import QRect, QSize, Qt, QCoreApplication, QMetaObject, QThread, pyqtSignal
+from PyQt5.QtCore import QRect, QSize, Qt, QCoreApplication, QMetaObject, QThread, pyqtSignal, QTimer
 # PyQt5 imports - GUI
 from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen, QColor
 # PyQt5 imports - Widgets
@@ -810,6 +811,12 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
+        # Setup timer for date/time updates
+        self.datetime_timer = QTimer(MainWindow)
+        self.datetime_timer.timeout.connect(self.update_datetime)
+        self.datetime_timer.start(1000)  # Update every 1000ms (1 second)
+        self.update_datetime()  # Initial update
+
     def _display_message(self, message, border_color, text_size=16):
         """
         Internal helper to display a message in the video area with customizable styling.
@@ -951,7 +958,8 @@ class Ui_MainWindow(object):
         self.btn_ac.setText(_translate("MainWindow", "AC"))
         self.btn_music.setText(_translate("MainWindow", "MUSIC"))
         self.btn_map.setText(_translate("MainWindow", "MAP"))
-        self.date.setText(_translate("MainWindow", "Date - Time-"))
+        # Now using real-time date/time from update_datetime()
+        # self.date.setText(_translate("MainWindow", "Date - Time-"))
         self.label_7.setText(_translate("MainWindow", "Locked"))
         self.label_5.setText(_translate("MainWindow", "Open"))
         self.label_4.setText(_translate("MainWindow", "Locked"))
@@ -989,6 +997,14 @@ class Ui_MainWindow(object):
         # Map tab video control buttons
         self.btn_start.clicked.connect(self.start_video)
         self.btn_stop.clicked.connect(self.stop_video)
+
+    def update_datetime(self):
+        """Update the date and time display with current date/time."""
+        current_datetime = datetime.now()
+        # Format: Month Date, Year (line 1)
+        #         HH:MM:SS (line 2)
+        formatted_datetime = current_datetime.strftime("%B %d, %Y\n%H:%M:%S")
+        self.date.setText(formatted_datetime)
 
     def show_dashboard(self):
         if self.frame_dashboard.isVisible():
