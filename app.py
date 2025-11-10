@@ -738,6 +738,13 @@ class Ui_MainWindow(object):
 "    \n"
 "background-color: rgba(0,171,169,100);\n"
 "\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    \n"
+"    background-color: rgba(0,100,98,50);\n"
+"    color: rgba(200,220,240,180);\n"
+"\n"
 "}")
         self.frame_map.setFrameShape(QFrame.NoFrame)
         self.frame_map.setFrameShadow(QFrame.Raised)
@@ -870,9 +877,21 @@ class Ui_MainWindow(object):
 
             # Start the thread
             self.video_thread.start()
+            
+            # Update button states: disable Start, enable Stop
+            self.btn_start.setEnabled(False)
+            self.btn_stop.setEnabled(True)
 
     def stop_video(self):
         """Stop the video thread and clean up resources (if running)."""
+        # Update button states: enable Start, disable Stop.
+        # This must be done first, regardless of thread state, because if the thread
+        # failed during initialization (e.g., camera not found), it may have already
+        # finished by the time we reach this method. In that case, the if block below
+        # won't execute, but the buttons still need to be reset to the "stopped" state.
+        self.btn_start.setEnabled(True)
+        self.btn_stop.setEnabled(False)
+
         if self.is_video_running():
             self.video_thread.stop()
             self.video_thread.wait()  # Wait for thread to finish cleanly
@@ -914,11 +933,14 @@ class Ui_MainWindow(object):
         self.label_33.setText(_translate("MainWindow", "02. Mrittu Utpadon Karkhana - Shonar Bangla Circus"))
         self.btn_start.setText(_translate("MainWindow", "Start"))
         self.btn_stop.setText(_translate("MainWindow", "Stop"))
-        # btn function
+        # Main tab navigation buttons
         self.btn_dash.clicked.connect(self.show_dashboard)
         self.btn_ac.clicked.connect(self.show_AC)
         self.btn_music.clicked.connect(self.show_Music)
         self.btn_map.clicked.connect(self.show_Map)
+        # Map tab video control buttons
+        self.btn_start.clicked.connect(self.start_video)
+        self.btn_stop.clicked.connect(self.stop_video)
 
     def show_dashboard(self):
         if self.frame_dashboard.isVisible():
