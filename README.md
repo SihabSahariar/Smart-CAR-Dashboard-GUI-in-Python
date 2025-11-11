@@ -29,7 +29,7 @@ Welcome to the Car Dashboard (HMI) prototype project! This simple yet intuitive 
 
 8. **Prerecorded Video Streaming**
    - When camera is unavailable (i.e., during development or demos), you can play video instead.
-   - Supports stopping the video & starting it again.
+   - Supports pausing the video & resuming it from the same frame.
    - Handles video file failures (file doesn't exist or video stream gets interrupted/corrupted).
 
 ## Development

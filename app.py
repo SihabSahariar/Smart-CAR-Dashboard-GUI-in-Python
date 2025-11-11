@@ -15,7 +15,7 @@ import folium
 # PyQt5 imports - Core
 from PyQt5.QtCore import QRect, QSize, Qt, QCoreApplication, QMetaObject, QThread, pyqtSignal
 # PyQt5 imports - GUI
-from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen
+from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen, QColor
 # PyQt5 imports - Widgets
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QLabel, QFrame, QPushButton,
@@ -40,9 +40,10 @@ class VideoThread(QThread):
     # Signal emitted when an error occurs
     error_occurred = pyqtSignal(str)  # Emits error message
 
-    def __init__(self, video_path=None):
+    def __init__(self, video_path=None, start_frame=0):
         super().__init__()
         self.video_path = video_path
+        self.start_frame = start_frame
         self.cap = None
         self.running = False
         self._should_stop = False
@@ -74,7 +75,13 @@ class VideoThread(QThread):
                 else:
                     self.error_occurred.emit("Camera not found or inaccessible!\n\n"
                                              "Please check camera connection and permissions.")
-                self.stop()  # Signal to skip main loop and proceed to cleanup
+                # Mark thread as stopped & exit immediately (cleanup will be handled by finally block)
+                self.stop()
+                return
+
+            # For video files, seek to the start frame position (resume support)
+            if self.video_path and self.start_frame > 0:
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.start_frame)
 
             # Main capture loop
             while not self._should_stop:
@@ -118,6 +125,12 @@ class VideoThread(QThread):
         """Request the thread to stop."""
         self._should_stop = True
 
+    def get_current_frame_position(self):
+        """Get the current frame position for video files (returns 0 for camera)."""
+        if self.cap is not None and self.video_path:
+            return int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
+        return 0
+
     def cleanup(self):
         """Release camera resources."""
         if self.cap is not None:
@@ -137,6 +150,7 @@ class Ui_MainWindow(object):
     def __init__(self, video_path=None):
         self.video_path = video_path
         self.video_thread = None
+        self.last_frame_position = 0  # Track video position for resume
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -796,30 +810,47 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
-    def display_error_message(self, message):
-        """Display error message in the video area with proper styling."""
-        # Create a QPixmap with the same dimensions as the webcam area
-        error_pixmap = QPixmap(Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT)
-        error_pixmap.fill(Qt.black)  # Black background to match the UI
+    def _display_message(self, message, border_color, text_size=16):
+        """
+        Internal helper to display a message in the video area with customizable styling.
 
-        # Draw the error message on the pixmap
-        painter = QPainter(error_pixmap)
-        painter.setPen(QPen(Qt.red, 2))
+        Args:
+            message: Text to display
+            border_color: QColor or Qt color for the border
+            text_size: Font size for the message text (default: 16)
+        """
+        # Create a QPixmap with the same dimensions as the webcam area
+        pixmap = QPixmap(Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT)
+        pixmap.fill(Qt.black)  # Black background to match the UI
+
+        # Draw the message on the pixmap
+        painter = QPainter(pixmap)
+        painter.setPen(QPen(border_color, 2))
         painter.setFont(QFont("Arial", 12, QFont.Bold))
 
         # Draw border
         painter.drawRect(2, 2, Ui_MainWindow.WEBCAM_WIDTH - 4, Ui_MainWindow.WEBCAM_HEIGHT - 4)
 
-        # Draw error message in center
+        # Draw message in center
         painter.setPen(QPen(Qt.white, 1))
-        text_rect = error_pixmap.rect()
+        painter.setFont(QFont("Arial", text_size, QFont.Bold))
+        text_rect = pixmap.rect()
         text_rect.adjust(10, 0, -10, 0)  # Add some margin
         painter.drawText(text_rect, Qt.AlignCenter | Qt.TextWordWrap, message)
 
         painter.end()
 
-        # Set the error pixmap to the webcam label
-        self.webcam.setPixmap(error_pixmap)
+        # Set the pixmap to the webcam label
+        self.webcam.setPixmap(pixmap)
+
+    def display_error_message(self, message):
+        """Display error message in the video area with red border."""
+        self._display_message(message, Qt.red, text_size=12)
+
+    def display_info_message(self, message):
+        """Display info message in the video area with teal border."""
+        teal_color = QColor(0, 171, 169)
+        self._display_message(message, teal_color, text_size=16)
 
     def on_frame_captured(self, frame):
         """
@@ -855,11 +886,11 @@ class Ui_MainWindow(object):
     def on_video_error(self, error_message):
         """
         Handle video-related errors (from video thread or frame processing).
-        Displays error message and stops video gracefully.
+        Stops video gracefully and displays error message.
         This runs in the main UI thread.
         """
-        self.display_error_message(error_message)
-        self.stop_video()
+        self.stop_video()  # Stop first (may show info message for a short period of time)
+        self.display_error_message(error_message)  # Then overwrite with error message
 
     def is_video_running(self):
         """Check if video thread is currently running."""
@@ -868,8 +899,11 @@ class Ui_MainWindow(object):
     def start_video(self):
         """Start the video thread (if not already running)."""
         if not self.is_video_running():
-            # Create and start the video thread
-            self.video_thread = VideoThread(video_path=self.video_path)
+            # Create and start the video thread (with resume position for videos)
+            self.video_thread = VideoThread(
+                video_path=self.video_path,
+                start_frame=self.last_frame_position
+            )
 
             # Connect signals to slots
             self.video_thread.frame_captured.connect(self.on_frame_captured)
@@ -893,8 +927,22 @@ class Ui_MainWindow(object):
         self.btn_stop.setEnabled(False)
 
         if self.is_video_running():
+            # Save current frame position for video files (to support resume)
+            self.last_frame_position = self.video_thread.get_current_frame_position()
+
+            # Disconnect signals first to prevent any more frames from being displayed
+            self.video_thread.frame_captured.disconnect(self.on_frame_captured)
+            self.video_thread.error_occurred.disconnect(self.on_video_error)
+
+            # Stop the thread
             self.video_thread.stop()
             self.video_thread.wait()  # Wait for thread to finish cleanly
+
+            # Display paused/stopped message instead of frozen last frame
+            if self.video_path:
+                self.display_info_message("Video Paused\n\nPress Start to continue")
+            else:
+                self.display_info_message("Camera Off\n\nPress Start to turn on")
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
