@@ -852,23 +852,21 @@ class Ui_MainWindow(object):
         This runs in the main UI thread.
         """
         self.display_error_message(error_message)
-        self.quit_video()
+        self.stop_video()
 
     def is_video_running(self):
         """Check if video thread is currently running."""
         return self.video_thread is not None and self.video_thread.isRunning()
 
-    def quit_video(self):
-        """Stop the video thread and clean up resources."""
+    def stop_video(self):
+        """Stop the video thread and clean up resources (if running)."""
         if self.is_video_running():
             self.video_thread.stop()
             self.video_thread.wait()  # Wait for thread to finish cleanly
 
-    def controlTimer(self):
-        """Toggle video capture on/off."""
-        if self.is_video_running():
-            self.quit_video()
-        else:
+    def start_video(self):
+        """Start the video thread (if not already running)."""
+        if not self.is_video_running():
             # Create and start the video thread
             self.video_thread = VideoThread(video_path=self.video_path)
 
@@ -925,7 +923,7 @@ class Ui_MainWindow(object):
     def show_dashboard(self):
         if self.frame_dashboard.isVisible():
             return
-        self.quit_video()
+        self.stop_video()
         self.frame_dashboard.setVisible(True)
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(False)
@@ -934,7 +932,7 @@ class Ui_MainWindow(object):
     def show_AC(self):
         if self.frame_AC.isVisible():
             return
-        self.quit_video()
+        self.stop_video()
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(True)
         self.frame_music.setVisible(False)
@@ -943,7 +941,7 @@ class Ui_MainWindow(object):
     def show_Music(self):
         if self.frame_music.isVisible():
             return
-        self.quit_video()
+        self.stop_video()
         self.frame_dashboard.setVisible(False)
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(True)
@@ -956,7 +954,7 @@ class Ui_MainWindow(object):
         self.frame_AC.setVisible(False)
         self.frame_music.setVisible(False)
         self.frame_map.setVisible(True)
-        self.controlTimer()
+        self.start_video()
 
     def progress(self):
         self.speed.set_MaxValue(100)
