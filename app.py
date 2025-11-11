@@ -758,16 +758,16 @@ class Ui_MainWindow(object):
         self.map_plot.setHtml(data.getvalue().decode())
         self.map_plot.setObjectName(u"map_plot")
         self.map_plot.setGeometry(QRect(100, 40, 391, 331))
-        self.pushButton_5 = QPushButton(self.frame_map)
-        self.pushButton_5.setObjectName(u"pushButton_5")
-        self.pushButton_5.setGeometry(QRect(830, 240, 119, 37))
-        sizePolicy.setHeightForWidth(self.pushButton_5.sizePolicy().hasHeightForWidth())
-        self.pushButton_5.setSizePolicy(sizePolicy)
-        self.pushButton_6 = QPushButton(self.frame_map)
-        self.pushButton_6.setObjectName(u"pushButton_6")
-        self.pushButton_6.setGeometry(QRect(830, 190, 119, 37))
-        sizePolicy.setHeightForWidth(self.pushButton_6.sizePolicy().hasHeightForWidth())
-        self.pushButton_6.setSizePolicy(sizePolicy)
+        self.btn_start = QPushButton(self.frame_map)
+        self.btn_start.setObjectName(u"btn_start")
+        self.btn_start.setGeometry(QRect(830, 240, 119, 37))
+        sizePolicy.setHeightForWidth(self.btn_start.sizePolicy().hasHeightForWidth())
+        self.btn_start.setSizePolicy(sizePolicy)
+        self.btn_stop = QPushButton(self.frame_map)
+        self.btn_stop.setObjectName(u"btn_stop")
+        self.btn_stop.setGeometry(QRect(830, 190, 119, 37))
+        sizePolicy.setHeightForWidth(self.btn_stop.sizePolicy().hasHeightForWidth())
+        self.btn_stop.setSizePolicy(sizePolicy)
 
         self.webcam = QLabel(self.frame_map)
         self.webcam.setObjectName(u"webcam")
@@ -858,12 +858,6 @@ class Ui_MainWindow(object):
         """Check if video thread is currently running."""
         return self.video_thread is not None and self.video_thread.isRunning()
 
-    def stop_video(self):
-        """Stop the video thread and clean up resources (if running)."""
-        if self.is_video_running():
-            self.video_thread.stop()
-            self.video_thread.wait()  # Wait for thread to finish cleanly
-
     def start_video(self):
         """Start the video thread (if not already running)."""
         if not self.is_video_running():
@@ -876,6 +870,12 @@ class Ui_MainWindow(object):
 
             # Start the thread
             self.video_thread.start()
+
+    def stop_video(self):
+        """Stop the video thread and clean up resources (if running)."""
+        if self.is_video_running():
+            self.video_thread.stop()
+            self.video_thread.wait()  # Wait for thread to finish cleanly
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
@@ -912,8 +912,8 @@ class Ui_MainWindow(object):
         self.label_20.setText(_translate("MainWindow", "Volume"))
         self.label_28.setText(_translate("MainWindow", "Mixer"))
         self.label_33.setText(_translate("MainWindow", "02. Mrittu Utpadon Karkhana - Shonar Bangla Circus"))
-        self.pushButton_5.setText(_translate("MainWindow", "Start"))
-        self.pushButton_6.setText(_translate("MainWindow", "Stop"))
+        self.btn_start.setText(_translate("MainWindow", "Start"))
+        self.btn_stop.setText(_translate("MainWindow", "Stop"))
         # btn function
         self.btn_dash.clicked.connect(self.show_dashboard)
         self.btn_ac.clicked.connect(self.show_AC)
