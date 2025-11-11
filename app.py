@@ -198,14 +198,14 @@ class Ui_MainWindow(object):
         self.frame.setObjectName("frame")
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.btn_dash = QPushButton(self.frame)
+        self.btn_dashboard = QPushButton(self.frame)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btn_dash.sizePolicy().hasHeightForWidth())
-        self.btn_dash.setSizePolicy(sizePolicy)
-        self.btn_dash.setObjectName("btn_dash")
-        self.horizontalLayout.addWidget(self.btn_dash)
+        sizePolicy.setHeightForWidth(self.btn_dashboard.sizePolicy().hasHeightForWidth())
+        self.btn_dashboard.setSizePolicy(sizePolicy)
+        self.btn_dashboard.setObjectName("btn_dashboard")
+        self.horizontalLayout.addWidget(self.btn_dashboard)
         self.btn_ac = QPushButton(self.frame)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -417,18 +417,18 @@ class Ui_MainWindow(object):
 "color:#fff;")
         self.label_16.setAlignment(Qt.AlignCenter)
         self.label_16.setObjectName("label_16")
-        self.frame_AC = QFrame(self.centralwidget)
-        self.frame_AC.setGeometry(QRect(70, 120, 971, 411))
-        self.frame_AC.setStyleSheet("QFrame{\n"
+        self.frame_ac = QFrame(self.centralwidget)
+        self.frame_ac.setGeometry(QRect(70, 120, 971, 411))
+        self.frame_ac.setStyleSheet("QFrame{\n"
 "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(34, 46, 61), stop:1 rgba(34, 34, 47));\n"
 "\n"
 "border-radius:200px;\n"
 "\n"
 "}")
-        self.frame_AC.setFrameShape(QFrame.StyledPanel)
-        self.frame_AC.setFrameShadow(QFrame.Raised)
-        self.frame_AC.setObjectName("frame_AC")
-        self.circularProgressCPU = QFrame(self.frame_AC)
+        self.frame_ac.setFrameShape(QFrame.StyledPanel)
+        self.frame_ac.setFrameShadow(QFrame.Raised)
+        self.frame_ac.setObjectName("frame_ac")
+        self.circularProgressCPU = QFrame(self.frame_ac)
         self.circularProgressCPU.setGeometry(QRect(720, 80, 220, 220))
         self.circularProgressCPU.setStyleSheet("QFrame{\n"
 "    border-radius: 110px;    \n"
@@ -470,7 +470,7 @@ class Ui_MainWindow(object):
 "}")
         self.label_19.setAlignment(Qt.AlignCenter)
         self.label_19.setObjectName("label_19")
-        self.weather = QFrame(self.frame_AC)
+        self.weather = QFrame(self.frame_ac)
         self.weather.setGeometry(QRect(330, 10, 341, 351))
         self.weather.setStyleSheet("QFrame{\n"
 "border-radius:5px;\n"
@@ -567,7 +567,7 @@ class Ui_MainWindow(object):
         self.line.setFrameShape(QFrame.VLine)
         self.line.setFrameShadow(QFrame.Sunken)
         self.line.setObjectName("line")
-        self.circularIndoor = QFrame(self.frame_AC)
+        self.circularIndoor = QFrame(self.frame_ac)
         self.circularIndoor.setGeometry(QRect(70, 90, 220, 220))
         self.circularIndoor.setStyleSheet("QFrame{\n"
 "    border-radius: 110px;    \n"
@@ -609,7 +609,7 @@ class Ui_MainWindow(object):
 "}")
         self.label_21.setAlignment(Qt.AlignCenter)
         self.label_21.setObjectName("label_21")
-        self.checked = AnimatedToggle(self.frame_AC)
+        self.checked = AnimatedToggle(self.frame_ac)
         self.checked.setGeometry(QRect(140, 310, 100, 50))
         self.frame_music = QFrame(self.centralwidget)
         self.frame_music.setGeometry(QRect(70, 120, 971, 411))
@@ -954,7 +954,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("CAR DASHBOARD", "MainWindow"))
-        self.btn_dash.setText(_translate("MainWindow", "DASHBOARD"))
+        self.btn_dashboard.setText(_translate("MainWindow", "DASHBOARD"))
         self.btn_ac.setText(_translate("MainWindow", "AC"))
         self.btn_music.setText(_translate("MainWindow", "MUSIC"))
         self.btn_map.setText(_translate("MainWindow", "MAP"))
@@ -990,10 +990,10 @@ class Ui_MainWindow(object):
         self.btn_start.setText(_translate("MainWindow", "Start"))
         self.btn_stop.setText(_translate("MainWindow", "Stop"))
         # Main tab navigation buttons
-        self.btn_dash.clicked.connect(self.show_dashboard)
-        self.btn_ac.clicked.connect(self.show_AC)
-        self.btn_music.clicked.connect(self.show_Music)
-        self.btn_map.clicked.connect(self.show_Map)
+        self.btn_dashboard.clicked.connect(self.show_dashboard)
+        self.btn_ac.clicked.connect(self.show_ac)
+        self.btn_music.clicked.connect(self.show_music)
+        self.btn_map.clicked.connect(self.show_map)
         # Map tab video control buttons
         self.btn_start.clicked.connect(self.start_video)
         self.btn_stop.clicked.connect(self.stop_video)
@@ -1006,41 +1006,39 @@ class Ui_MainWindow(object):
         formatted_datetime = current_datetime.strftime("%B %d, %Y\n%H:%M:%S")
         self.date.setText(formatted_datetime)
 
+    def _switch_tab(self, target_frame, enable_video=False):
+        """
+        Internal helper to switch between tabs.
+
+        Args:
+            target_frame: The frame widget to make visible
+            enable_video: Whether to enable video after switching
+        """
+        # Don't switch if already on this tab
+        if target_frame.isVisible():
+            return
+
+        # Show the target frame, hide all other frames
+        for frame in [self.frame_dashboard, self.frame_ac, self.frame_music, self.frame_map]:
+            frame.setVisible(frame == target_frame)
+
+        # Control video based on whether we're going to Map tab or not
+        if enable_video:
+            self.start_video()
+        else:
+            self.stop_video()
+
     def show_dashboard(self):
-        if self.frame_dashboard.isVisible():
-            return
-        self.stop_video()
-        self.frame_dashboard.setVisible(True)
-        self.frame_AC.setVisible(False)
-        self.frame_music.setVisible(False)
-        self.frame_map.setVisible(False)
+        self._switch_tab(self.frame_dashboard)
 
-    def show_AC(self):
-        if self.frame_AC.isVisible():
-            return
-        self.stop_video()
-        self.frame_dashboard.setVisible(False)
-        self.frame_AC.setVisible(True)
-        self.frame_music.setVisible(False)
-        self.frame_map.setVisible(False)
+    def show_ac(self):
+        self._switch_tab(self.frame_ac)
 
-    def show_Music(self):
-        if self.frame_music.isVisible():
-            return
-        self.stop_video()
-        self.frame_dashboard.setVisible(False)
-        self.frame_AC.setVisible(False)
-        self.frame_music.setVisible(True)
-        self.frame_map.setVisible(False)
+    def show_music(self):
+        self._switch_tab(self.frame_music)
 
-    def show_Map(self):
-        if self.frame_map.isVisible():
-            return
-        self.frame_dashboard.setVisible(False)
-        self.frame_AC.setVisible(False)
-        self.frame_music.setVisible(False)
-        self.frame_map.setVisible(True)
-        self.start_video()
+    def show_map(self):
+        self._switch_tab(self.frame_map, enable_video=True)
 
     def progress(self):
         self.speed.set_MaxValue(100)
