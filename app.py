@@ -192,6 +192,13 @@ class Ui_MainWindow(object):
 "    \n"
 "background-color: rgba(43,87,120,100);\n"
 "\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    \n"
+"    background-color: rgba(70,110,160,130);\n"
+"    color: rgba(200,220,240,180);\n"
+"\n"
 "}")
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
@@ -1006,12 +1013,13 @@ class Ui_MainWindow(object):
         formatted_datetime = current_datetime.strftime("%B %d, %Y\n%H:%M:%S")
         self.date.setText(formatted_datetime)
 
-    def _switch_tab(self, target_frame, enable_video=False):
+    def _switch_tab(self, target_frame, target_button, enable_video=False):
         """
         Internal helper to switch between tabs.
 
         Args:
             target_frame: The frame widget to make visible
+            target_button: The button widget to disable
             enable_video: Whether to enable video after switching
         """
         # Don't switch if already on this tab
@@ -1022,6 +1030,10 @@ class Ui_MainWindow(object):
         for frame in [self.frame_dashboard, self.frame_ac, self.frame_music, self.frame_map]:
             frame.setVisible(frame == target_frame)
 
+        # Disable the active tab's button, enable all other buttons
+        for button in [self.btn_dashboard, self.btn_ac, self.btn_music, self.btn_map]:
+            button.setEnabled(button != target_button)
+
         # Control video based on whether we're going to Map tab or not
         if enable_video:
             self.start_video()
@@ -1029,16 +1041,16 @@ class Ui_MainWindow(object):
             self.stop_video()
 
     def show_dashboard(self):
-        self._switch_tab(self.frame_dashboard)
+        self._switch_tab(self.frame_dashboard, self.btn_dashboard)
 
     def show_ac(self):
-        self._switch_tab(self.frame_ac)
+        self._switch_tab(self.frame_ac, self.btn_ac)
 
     def show_music(self):
-        self._switch_tab(self.frame_music)
+        self._switch_tab(self.frame_music, self.btn_music)
 
     def show_map(self):
-        self._switch_tab(self.frame_map, enable_video=True)
+        self._switch_tab(self.frame_map, self.btn_map, enable_video=True)
 
     def progress(self):
         self.speed.set_MaxValue(100)
