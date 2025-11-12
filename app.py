@@ -7,11 +7,13 @@ import io
 import sys
 import argparse
 from datetime import datetime
+from http.client import responses as http_responses
 
 # import OpenCV module
 import cv2
 
 import folium
+import requests
 
 # PyQt5 imports - Core
 from PyQt5.QtCore import QRect, QSize, Qt, QCoreApplication, QMetaObject, QThread, pyqtSignal, QTimer
@@ -29,6 +31,72 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView # pip install PyQtWebEngine
 # Custom widgets
 from gauge import AnalogGaugeWidget
 from qtwidgets import AnimatedToggle
+
+
+def get_current_location():
+    """
+    Get the current geographic location based on IP address.
+
+    Returns:
+        tuple: (latitude, longitude) of the current location
+        Falls back to New York City if geolocation fails
+    """
+    # List of geolocation services to try (in order)
+    services = [
+        {
+            'name': 'ipapi.co',
+            'url': 'https://ipapi.co/json/',
+            'lat_key': 'latitude',
+            'lon_key': 'longitude',
+            'city_key': 'city',
+            'country_key': 'country_name',
+            'status_check': None  # No status field to check
+        },
+        {
+            'name': 'ip-api.com',
+            'url': 'http://ip-api.com/json/',
+            'lat_key': 'lat',
+            'lon_key': 'lon',
+            'city_key': 'city',
+            'country_key': 'country',
+            'status_check': ('status', 'success')  # Must have status='success'
+        }
+    ]
+
+    # Try each service in order
+    for service in services:
+        try:
+            print(f"Attempting to detect location via {service['name']}...")
+            response = requests.get(service['url'], timeout=3)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                # Check status field if required
+                if service['status_check']:
+                    key, expected_value = service['status_check']
+                    if data.get(key) != expected_value:
+                        print(f"✗ {service['name']} returned unexpected status")
+                        continue
+
+                # Extract coordinates
+                latitude = data.get(service['lat_key'])
+                longitude = data.get(service['lon_key'])
+
+                if latitude is not None and longitude is not None:
+                    city = data.get(service['city_key'], 'Unknown')
+                    country = data.get(service['country_key'], 'Unknown')
+                    print(f"✓ Location detected: {city}, {country} ({latitude}, {longitude})")
+                    return (latitude, longitude)
+            else:
+                status_msg = http_responses.get(response.status_code, "Unknown Error")
+                print(f"✗ {service['name']} returned status code: {response.status_code} ({status_msg})")
+        except Exception as e:
+            print(f"✗ {service['name']} failed: {e}")
+
+    # Fallback to New York City if all services fail
+    print("⚠ Using fallback location: New York City")
+    return (40.7128, -74.0060)
 
 
 class VideoThread(QThread):
@@ -772,7 +840,8 @@ class Ui_MainWindow(object):
         self.frame_map.setFrameShadow(QFrame.Raised)
         self.frame_map.setObjectName("frame_map")
 
-        coordinate = (24.413274773214205, 88.96567734902074)
+        # Get current location based on IP address
+        coordinate = get_current_location()
         m = folium.Map(
             tiles='OpenStreetMap',
             zoom_start=10,

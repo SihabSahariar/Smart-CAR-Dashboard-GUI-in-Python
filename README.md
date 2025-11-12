@@ -21,6 +21,7 @@ Welcome to the Car Dashboard (HMI) prototype project! This simple yet intuitive 
 
 6. **Map for Navigation**
    - Integrated navigation system to guide you through your journeys.
+   - Implemented an automatic location detection for map using IP geolocation.
 
 7. **Weather Forecast**
    - Stay informed about the weather conditions to plan your trips accordingly.
@@ -87,6 +88,7 @@ options:
 <img src = "ss/3.PNG">
 <img src = "ss/4.PNG">
 <img src = "ss/5.PNG">
+<img src = "ss/6.PNG">
 
 ## Todo
 
