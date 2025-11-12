@@ -67,17 +67,22 @@ Run the application:
 ```
 or
 ```bash
+(.venv) $ python app.py --camera-device 4
+```
+or
+```bash
 (.venv) $ python app.py --play-video /path/to/your/video.mp4
 ```
-Use `--help` to display the available options
+Use `--help` to display the available options:
 ```console
 (.venv) $ python app.py --help
-usage: app.py [-h] [--play-video path]
+usage: app.py [-h] [--camera-device idx | --play-video path]
 
 Smart Car Dashboard GUI
 
 options:
   -h, --help            show this help message and exit
+  --camera-device idx   [Optional] camera device index to use (default: 0)
   --play-video path     [Optional] path to video file to play instead of camera
 ```
 

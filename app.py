@@ -109,8 +109,9 @@ class VideoThread(QThread):
     # Signal emitted when an error occurs
     error_occurred = pyqtSignal(str)  # Emits error message
 
-    def __init__(self, video_path=None, start_frame=0):
+    def __init__(self, camera_device=0, video_path=None, start_frame=0):
         super().__init__()
+        self.camera_device = camera_device
         self.video_path = video_path
         self.start_frame = start_frame
         self.cap = None
@@ -130,11 +131,11 @@ class VideoThread(QThread):
         self._should_stop = False
 
         try:
-            # Initialize video capture (use video file if provided, otherwise use camera device 0)
+            # Initialize video capture (use video file if provided, otherwise use camera device)
             if self.video_path:
                 self.cap = cv2.VideoCapture(self.video_path)
             else:
-                self.cap = cv2.VideoCapture(0)
+                self.cap = cv2.VideoCapture(self.camera_device)
 
             # Check if capture device opened successfully
             if not self.cap.isOpened():
@@ -216,7 +217,8 @@ class Ui_MainWindow(object):
     WEBCAM_WIDTH = 321
     WEBCAM_HEIGHT = 331
 
-    def __init__(self, video_path=None):
+    def __init__(self, camera_device=0, video_path=None):
+        self.camera_device = camera_device
         self.video_path = video_path
         self.video_thread = None
         self.last_frame_position = 0  # Track video position for resume
@@ -984,6 +986,7 @@ class Ui_MainWindow(object):
         if not self.is_video_running():
             # Create and start the video thread (with resume position for videos)
             self.video_thread = VideoThread(
+                camera_device=self.camera_device,
                 video_path=self.video_path,
                 start_frame=self.last_frame_position
             )
@@ -1161,7 +1164,23 @@ import resources
 if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Smart Car Dashboard GUI')
-    parser.add_argument('--play-video', metavar='path', type=str, help='[Optional] path to video file to play instead of camera')
+
+    # Create mutually exclusive group for video source selection
+    source_group = parser.add_mutually_exclusive_group()
+    source_group.add_argument(
+        '--camera-device',
+        metavar='idx',
+        type=int,
+        default=0,
+        help='[Optional] camera device index to use (default: 0)'
+    )
+    source_group.add_argument(
+        '--play-video',
+        metavar='path',
+        type=str,
+        help='[Optional] path to video file to play instead of camera'
+    )
+
     args = parser.parse_args()
 
     # Enable automatic high DPI scaling
@@ -1173,7 +1192,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     main_app_window = QMainWindow()
-    ui = Ui_MainWindow(video_path=args.play_video)
+    ui = Ui_MainWindow(camera_device=args.camera_device, video_path=args.play_video)
     ui.setupUi(main_app_window)
 
     # Center window on screen
