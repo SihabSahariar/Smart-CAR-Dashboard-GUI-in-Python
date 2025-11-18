@@ -1180,6 +1180,13 @@ if __name__ == "__main__":
         type=str,
         help='[Optional] path to video file to play instead of camera'
     )
+    
+    # Kiosk mode option
+    parser.add_argument(
+        '--kiosk',
+        action='store_true',
+        help='[Optional] run in kiosk mode (fullscreen + no window decorations)'
+    )
 
     args = parser.parse_args()
 
@@ -1195,13 +1202,19 @@ if __name__ == "__main__":
     ui = Ui_MainWindow(camera_device=args.camera_device, video_path=args.play_video)
     ui.setupUi(main_app_window)
 
-    # Center window on screen
-    screen = app.primaryScreen()
-    screen_geometry = screen.geometry()
-    window_geometry = main_app_window.frameGeometry()
-    center_point = screen_geometry.center()
-    window_geometry.moveCenter(center_point)
-    main_app_window.move(window_geometry.topLeft())
+    # Apply kiosk mode settings if requested
+    if args.kiosk:
+        # Kiosk mode: frameless window, always on top, fullscreen
+        main_app_window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        main_app_window.showFullScreen()
+    else:
+        # Normal mode: center window on screen
+        screen = app.primaryScreen()
+        screen_geometry = screen.geometry()
+        window_geometry = main_app_window.frameGeometry()
+        center_point = screen_geometry.center()
+        window_geometry.moveCenter(center_point)
+        main_app_window.move(window_geometry.topLeft())
+        main_app_window.show()
 
-    main_app_window.show()
     sys.exit(app.exec_())

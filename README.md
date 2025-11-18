@@ -36,6 +36,10 @@ Welcome to the Car Dashboard (HMI) prototype project! This simple yet intuitive 
    - Supports pausing the video & resuming it from the same frame.
    - Handles video file failures (file doesn't exist or video stream gets interrupted/corrupted).
 
+10. **Kiosk Mode**
+   - Fullscreen operation without window decorations, preventing access to the underlying OS.
+   - Designed for embedded systems, automotive displays, and dedicated hardware installations.
+
 ## Development
 
 1. Create a Python virtual environment (optional but recommended):
@@ -76,7 +80,7 @@ or
 Use `--help` to display the available options:
 ```console
 (.venv) $ python app.py --help
-usage: app.py [-h] [--camera-device idx | --play-video path]
+usage: app.py [-h] [--camera-device idx | --play-video path] [--kiosk]
 
 Smart Car Dashboard GUI
 
@@ -84,6 +88,7 @@ options:
   -h, --help            show this help message and exit
   --camera-device idx   [Optional] camera device index to use (default: 0)
   --play-video path     [Optional] path to video file to play instead of camera
+  --kiosk               [Optional] run in kiosk mode (fullscreen + no window decorations)
 ```
 
 ## Screenshot
