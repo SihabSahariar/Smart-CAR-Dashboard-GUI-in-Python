@@ -6,16 +6,19 @@ __version__ = "1.0.1"
 import io
 import sys
 import argparse
+from datetime import datetime
+from http.client import responses as http_responses
 
 # import OpenCV module
 import cv2
 
 import folium
+import requests
 
 # PyQt5 imports - Core
-from PyQt5.QtCore import QRect, QSize, Qt, QCoreApplication, QMetaObject, QThread, pyqtSignal
+from PyQt5.QtCore import QRect, QSize, Qt, QCoreApplication, QMetaObject, QThread, pyqtSignal, QTimer
 # PyQt5 imports - GUI
-from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen
+from PyQt5.QtGui import QPixmap, QImage, QFont, QPainter, QPen, QColor
 # PyQt5 imports - Widgets
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QLabel, QFrame, QPushButton,
@@ -30,6 +33,72 @@ from gauge import AnalogGaugeWidget
 from qtwidgets import AnimatedToggle
 
 
+def get_current_location():
+    """
+    Get the current geographic location based on IP address.
+
+    Returns:
+        tuple: (latitude, longitude) of the current location
+        Falls back to New York City if geolocation fails
+    """
+    # List of geolocation services to try (in order)
+    services = [
+        {
+            'name': 'ipapi.co',
+            'url': 'https://ipapi.co/json/',
+            'lat_key': 'latitude',
+            'lon_key': 'longitude',
+            'city_key': 'city',
+            'country_key': 'country_name',
+            'status_check': None  # No status field to check
+        },
+        {
+            'name': 'ip-api.com',
+            'url': 'http://ip-api.com/json/',
+            'lat_key': 'lat',
+            'lon_key': 'lon',
+            'city_key': 'city',
+            'country_key': 'country',
+            'status_check': ('status', 'success')  # Must have status='success'
+        }
+    ]
+
+    # Try each service in order
+    for service in services:
+        try:
+            print(f"Attempting to detect location via {service['name']}...")
+            response = requests.get(service['url'], timeout=3)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                # Check status field if required
+                if service['status_check']:
+                    key, expected_value = service['status_check']
+                    if data.get(key) != expected_value:
+                        print(f"✗ {service['name']} returned unexpected status")
+                        continue
+
+                # Extract coordinates
+                latitude = data.get(service['lat_key'])
+                longitude = data.get(service['lon_key'])
+
+                if latitude is not None and longitude is not None:
+                    city = data.get(service['city_key'], 'Unknown')
+                    country = data.get(service['country_key'], 'Unknown')
+                    print(f"✓ Location detected: {city}, {country} ({latitude}, {longitude})")
+                    return (latitude, longitude)
+            else:
+                status_msg = http_responses.get(response.status_code, "Unknown Error")
+                print(f"✗ {service['name']} returned status code: {response.status_code} ({status_msg})")
+        except Exception as e:
+            print(f"✗ {service['name']} failed: {e}")
+
+    # Fallback to New York City if all services fail
+    print("⚠ Using fallback location: New York City")
+    return (40.7128, -74.0060)
+
+
 class VideoThread(QThread):
     """
     Thread for handling video/camera capture operations.
@@ -40,9 +109,11 @@ class VideoThread(QThread):
     # Signal emitted when an error occurs
     error_occurred = pyqtSignal(str)  # Emits error message
 
-    def __init__(self, video_path=None):
+    def __init__(self, camera_device=0, video_path=None, start_frame=0):
         super().__init__()
+        self.camera_device = camera_device
         self.video_path = video_path
+        self.start_frame = start_frame
         self.cap = None
         self.running = False
         self._should_stop = False
@@ -60,11 +131,11 @@ class VideoThread(QThread):
         self._should_stop = False
 
         try:
-            # Initialize video capture (use video file if provided, otherwise use camera device 0)
+            # Initialize video capture (use video file if provided, otherwise use camera device)
             if self.video_path:
                 self.cap = cv2.VideoCapture(self.video_path)
             else:
-                self.cap = cv2.VideoCapture(0)
+                self.cap = cv2.VideoCapture(self.camera_device)
 
             # Check if capture device opened successfully
             if not self.cap.isOpened():
@@ -74,7 +145,13 @@ class VideoThread(QThread):
                 else:
                     self.error_occurred.emit("Camera not found or inaccessible!\n\n"
                                              "Please check camera connection and permissions.")
-                self.stop()  # Signal to skip main loop and proceed to cleanup
+                # Mark thread as stopped & exit immediately (cleanup will be handled by finally block)
+                self.stop()
+                return
+
+            # For video files, seek to the start frame position (resume support)
+            if self.video_path and self.start_frame > 0:
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.start_frame)
 
             # Main capture loop
             while not self._should_stop:
@@ -118,6 +195,12 @@ class VideoThread(QThread):
         """Request the thread to stop."""
         self._should_stop = True
 
+    def get_current_frame_position(self):
+        """Get the current frame position for video files (returns 0 for camera)."""
+        if self.cap is not None and self.video_path:
+            return int(self.cap.get(cv2.CAP_PROP_POS_FRAMES))
+        return 0
+
     def cleanup(self):
         """Release camera resources."""
         if self.cap is not None:
@@ -134,9 +217,11 @@ class Ui_MainWindow(object):
     WEBCAM_WIDTH = 321
     WEBCAM_HEIGHT = 331
 
-    def __init__(self, video_path=None):
+    def __init__(self, camera_device=0, video_path=None):
+        self.camera_device = camera_device
         self.video_path = video_path
         self.video_thread = None
+        self.last_frame_position = 0  # Track video position for resume
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -177,20 +262,27 @@ class Ui_MainWindow(object):
 "    \n"
 "background-color: rgba(43,87,120,100);\n"
 "\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    \n"
+"    background-color: rgba(70,110,160,130);\n"
+"    color: rgba(200,220,240,180);\n"
+"\n"
 "}")
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setObjectName("frame")
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.btn_dash = QPushButton(self.frame)
+        self.btn_dashboard = QPushButton(self.frame)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btn_dash.sizePolicy().hasHeightForWidth())
-        self.btn_dash.setSizePolicy(sizePolicy)
-        self.btn_dash.setObjectName("btn_dash")
-        self.horizontalLayout.addWidget(self.btn_dash)
+        sizePolicy.setHeightForWidth(self.btn_dashboard.sizePolicy().hasHeightForWidth())
+        self.btn_dashboard.setSizePolicy(sizePolicy)
+        self.btn_dashboard.setObjectName("btn_dashboard")
+        self.horizontalLayout.addWidget(self.btn_dashboard)
         self.btn_ac = QPushButton(self.frame)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -402,18 +494,18 @@ class Ui_MainWindow(object):
 "color:#fff;")
         self.label_16.setAlignment(Qt.AlignCenter)
         self.label_16.setObjectName("label_16")
-        self.frame_AC = QFrame(self.centralwidget)
-        self.frame_AC.setGeometry(QRect(70, 120, 971, 411))
-        self.frame_AC.setStyleSheet("QFrame{\n"
+        self.frame_ac = QFrame(self.centralwidget)
+        self.frame_ac.setGeometry(QRect(70, 120, 971, 411))
+        self.frame_ac.setStyleSheet("QFrame{\n"
 "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(34, 46, 61), stop:1 rgba(34, 34, 47));\n"
 "\n"
 "border-radius:200px;\n"
 "\n"
 "}")
-        self.frame_AC.setFrameShape(QFrame.StyledPanel)
-        self.frame_AC.setFrameShadow(QFrame.Raised)
-        self.frame_AC.setObjectName("frame_AC")
-        self.circularProgressCPU = QFrame(self.frame_AC)
+        self.frame_ac.setFrameShape(QFrame.StyledPanel)
+        self.frame_ac.setFrameShadow(QFrame.Raised)
+        self.frame_ac.setObjectName("frame_ac")
+        self.circularProgressCPU = QFrame(self.frame_ac)
         self.circularProgressCPU.setGeometry(QRect(720, 80, 220, 220))
         self.circularProgressCPU.setStyleSheet("QFrame{\n"
 "    border-radius: 110px;    \n"
@@ -455,7 +547,7 @@ class Ui_MainWindow(object):
 "}")
         self.label_19.setAlignment(Qt.AlignCenter)
         self.label_19.setObjectName("label_19")
-        self.weather = QFrame(self.frame_AC)
+        self.weather = QFrame(self.frame_ac)
         self.weather.setGeometry(QRect(330, 10, 341, 351))
         self.weather.setStyleSheet("QFrame{\n"
 "border-radius:5px;\n"
@@ -552,7 +644,7 @@ class Ui_MainWindow(object):
         self.line.setFrameShape(QFrame.VLine)
         self.line.setFrameShadow(QFrame.Sunken)
         self.line.setObjectName("line")
-        self.circularIndoor = QFrame(self.frame_AC)
+        self.circularIndoor = QFrame(self.frame_ac)
         self.circularIndoor.setGeometry(QRect(70, 90, 220, 220))
         self.circularIndoor.setStyleSheet("QFrame{\n"
 "    border-radius: 110px;    \n"
@@ -594,7 +686,7 @@ class Ui_MainWindow(object):
 "}")
         self.label_21.setAlignment(Qt.AlignCenter)
         self.label_21.setObjectName("label_21")
-        self.checked = AnimatedToggle(self.frame_AC)
+        self.checked = AnimatedToggle(self.frame_ac)
         self.checked.setGeometry(QRect(140, 310, 100, 50))
         self.frame_music = QFrame(self.centralwidget)
         self.frame_music.setGeometry(QRect(70, 120, 971, 411))
@@ -738,12 +830,20 @@ class Ui_MainWindow(object):
 "    \n"
 "background-color: rgba(0,171,169,100);\n"
 "\n"
+"}\n"
+"\n"
+"QPushButton:disabled{\n"
+"    \n"
+"    background-color: rgba(0,100,98,50);\n"
+"    color: rgba(200,220,240,180);\n"
+"\n"
 "}")
         self.frame_map.setFrameShape(QFrame.NoFrame)
         self.frame_map.setFrameShadow(QFrame.Raised)
         self.frame_map.setObjectName("frame_map")
 
-        coordinate = (24.413274773214205, 88.96567734902074)
+        # Get current location based on IP address
+        coordinate = get_current_location()
         m = folium.Map(
             tiles='OpenStreetMap',
             zoom_start=10,
@@ -758,16 +858,16 @@ class Ui_MainWindow(object):
         self.map_plot.setHtml(data.getvalue().decode())
         self.map_plot.setObjectName(u"map_plot")
         self.map_plot.setGeometry(QRect(100, 40, 391, 331))
-        self.pushButton_5 = QPushButton(self.frame_map)
-        self.pushButton_5.setObjectName(u"pushButton_5")
-        self.pushButton_5.setGeometry(QRect(830, 240, 119, 37))
-        sizePolicy.setHeightForWidth(self.pushButton_5.sizePolicy().hasHeightForWidth())
-        self.pushButton_5.setSizePolicy(sizePolicy)
-        self.pushButton_6 = QPushButton(self.frame_map)
-        self.pushButton_6.setObjectName(u"pushButton_6")
-        self.pushButton_6.setGeometry(QRect(830, 190, 119, 37))
-        sizePolicy.setHeightForWidth(self.pushButton_6.sizePolicy().hasHeightForWidth())
-        self.pushButton_6.setSizePolicy(sizePolicy)
+        self.btn_start = QPushButton(self.frame_map)
+        self.btn_start.setObjectName(u"btn_start")
+        self.btn_start.setGeometry(QRect(830, 240, 119, 37))
+        sizePolicy.setHeightForWidth(self.btn_start.sizePolicy().hasHeightForWidth())
+        self.btn_start.setSizePolicy(sizePolicy)
+        self.btn_stop = QPushButton(self.frame_map)
+        self.btn_stop.setObjectName(u"btn_stop")
+        self.btn_stop.setGeometry(QRect(830, 190, 119, 37))
+        sizePolicy.setHeightForWidth(self.btn_stop.sizePolicy().hasHeightForWidth())
+        self.btn_stop.setSizePolicy(sizePolicy)
 
         self.webcam = QLabel(self.frame_map)
         self.webcam.setObjectName(u"webcam")
@@ -789,30 +889,53 @@ class Ui_MainWindow(object):
 )
         self.label_km.setAlignment(Qt.AlignCenter)
 
-    def display_error_message(self, message):
-        """Display error message in the video area with proper styling."""
-        # Create a QPixmap with the same dimensions as the webcam area
-        error_pixmap = QPixmap(Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT)
-        error_pixmap.fill(Qt.black)  # Black background to match the UI
+        # Setup timer for date/time updates
+        self.datetime_timer = QTimer(MainWindow)
+        self.datetime_timer.timeout.connect(self.update_datetime)
+        self.datetime_timer.start(1000)  # Update every 1000ms (1 second)
+        self.update_datetime()  # Initial update
 
-        # Draw the error message on the pixmap
-        painter = QPainter(error_pixmap)
-        painter.setPen(QPen(Qt.red, 2))
+    def _display_message(self, message, border_color, text_size=16):
+        """
+        Internal helper to display a message in the video area with customizable styling.
+
+        Args:
+            message: Text to display
+            border_color: QColor or Qt color for the border
+            text_size: Font size for the message text (default: 16)
+        """
+        # Create a QPixmap with the same dimensions as the webcam area
+        pixmap = QPixmap(Ui_MainWindow.WEBCAM_WIDTH, Ui_MainWindow.WEBCAM_HEIGHT)
+        pixmap.fill(Qt.black)  # Black background to match the UI
+
+        # Draw the message on the pixmap
+        painter = QPainter(pixmap)
+        painter.setPen(QPen(border_color, 2))
         painter.setFont(QFont("Arial", 12, QFont.Bold))
 
         # Draw border
         painter.drawRect(2, 2, Ui_MainWindow.WEBCAM_WIDTH - 4, Ui_MainWindow.WEBCAM_HEIGHT - 4)
 
-        # Draw error message in center
+        # Draw message in center
         painter.setPen(QPen(Qt.white, 1))
-        text_rect = error_pixmap.rect()
+        painter.setFont(QFont("Arial", text_size, QFont.Bold))
+        text_rect = pixmap.rect()
         text_rect.adjust(10, 0, -10, 0)  # Add some margin
         painter.drawText(text_rect, Qt.AlignCenter | Qt.TextWordWrap, message)
 
         painter.end()
 
-        # Set the error pixmap to the webcam label
-        self.webcam.setPixmap(error_pixmap)
+        # Set the pixmap to the webcam label
+        self.webcam.setPixmap(pixmap)
+
+    def display_error_message(self, message):
+        """Display error message in the video area with red border."""
+        self._display_message(message, Qt.red, text_size=12)
+
+    def display_info_message(self, message):
+        """Display info message in the video area with teal border."""
+        teal_color = QColor(0, 171, 169)
+        self._display_message(message, teal_color, text_size=16)
 
     def on_frame_captured(self, frame):
         """
@@ -848,29 +971,25 @@ class Ui_MainWindow(object):
     def on_video_error(self, error_message):
         """
         Handle video-related errors (from video thread or frame processing).
-        Displays error message and stops video gracefully.
+        Stops video gracefully and displays error message.
         This runs in the main UI thread.
         """
-        self.display_error_message(error_message)
-        self.quit_video()
+        self.stop_video()  # Stop first (may show info message for a short period of time)
+        self.display_error_message(error_message)  # Then overwrite with error message
 
     def is_video_running(self):
         """Check if video thread is currently running."""
         return self.video_thread is not None and self.video_thread.isRunning()
 
-    def quit_video(self):
-        """Stop the video thread and clean up resources."""
-        if self.is_video_running():
-            self.video_thread.stop()
-            self.video_thread.wait()  # Wait for thread to finish cleanly
-
-    def controlTimer(self):
-        """Toggle video capture on/off."""
-        if self.is_video_running():
-            self.quit_video()
-        else:
-            # Create and start the video thread
-            self.video_thread = VideoThread(video_path=self.video_path)
+    def start_video(self):
+        """Start the video thread (if not already running)."""
+        if not self.is_video_running():
+            # Create and start the video thread (with resume position for videos)
+            self.video_thread = VideoThread(
+                camera_device=self.camera_device,
+                video_path=self.video_path,
+                start_frame=self.last_frame_position
+            )
 
             # Connect signals to slots
             self.video_thread.frame_captured.connect(self.on_frame_captured)
@@ -878,15 +997,48 @@ class Ui_MainWindow(object):
 
             # Start the thread
             self.video_thread.start()
+            
+            # Update button states: disable Start, enable Stop
+            self.btn_start.setEnabled(False)
+            self.btn_stop.setEnabled(True)
+
+    def stop_video(self):
+        """Stop the video thread and clean up resources (if running)."""
+        # Update button states: enable Start, disable Stop.
+        # This must be done first, regardless of thread state, because if the thread
+        # failed during initialization (e.g., camera not found), it may have already
+        # finished by the time we reach this method. In that case, the if block below
+        # won't execute, but the buttons still need to be reset to the "stopped" state.
+        self.btn_start.setEnabled(True)
+        self.btn_stop.setEnabled(False)
+
+        if self.is_video_running():
+            # Save current frame position for video files (to support resume)
+            self.last_frame_position = self.video_thread.get_current_frame_position()
+
+            # Disconnect signals first to prevent any more frames from being displayed
+            self.video_thread.frame_captured.disconnect(self.on_frame_captured)
+            self.video_thread.error_occurred.disconnect(self.on_video_error)
+
+            # Stop the thread
+            self.video_thread.stop()
+            self.video_thread.wait()  # Wait for thread to finish cleanly
+
+            # Display paused/stopped message instead of frozen last frame
+            if self.video_path:
+                self.display_info_message("Video Paused\n\nPress Start to continue")
+            else:
+                self.display_info_message("Camera Off\n\nPress Start to turn on")
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("CAR DASHBOARD", "MainWindow"))
-        self.btn_dash.setText(_translate("MainWindow", "DASHBOARD"))
+        self.btn_dashboard.setText(_translate("MainWindow", "DASHBOARD"))
         self.btn_ac.setText(_translate("MainWindow", "AC"))
         self.btn_music.setText(_translate("MainWindow", "MUSIC"))
         self.btn_map.setText(_translate("MainWindow", "MAP"))
-        self.date.setText(_translate("MainWindow", "Date - Time-"))
+        # Now using real-time date/time from update_datetime()
+        # self.date.setText(_translate("MainWindow", "Date - Time-"))
         self.label_7.setText(_translate("MainWindow", "Locked"))
         self.label_5.setText(_translate("MainWindow", "Open"))
         self.label_4.setText(_translate("MainWindow", "Locked"))
@@ -914,49 +1066,63 @@ class Ui_MainWindow(object):
         self.label_20.setText(_translate("MainWindow", "Volume"))
         self.label_28.setText(_translate("MainWindow", "Mixer"))
         self.label_33.setText(_translate("MainWindow", "02. Mrittu Utpadon Karkhana - Shonar Bangla Circus"))
-        self.pushButton_5.setText(_translate("MainWindow", "Start"))
-        self.pushButton_6.setText(_translate("MainWindow", "Stop"))
-        # btn function
-        self.btn_dash.clicked.connect(self.show_dashboard)
-        self.btn_ac.clicked.connect(self.show_AC)
-        self.btn_music.clicked.connect(self.show_Music)
-        self.btn_map.clicked.connect(self.show_Map)
+        self.btn_start.setText(_translate("MainWindow", "Start"))
+        self.btn_stop.setText(_translate("MainWindow", "Stop"))
+        # Main tab navigation buttons
+        self.btn_dashboard.clicked.connect(self.show_dashboard)
+        self.btn_ac.clicked.connect(self.show_ac)
+        self.btn_music.clicked.connect(self.show_music)
+        self.btn_map.clicked.connect(self.show_map)
+        # Map tab video control buttons
+        self.btn_start.clicked.connect(self.start_video)
+        self.btn_stop.clicked.connect(self.stop_video)
+
+    def update_datetime(self):
+        """Update the date and time display with current date/time."""
+        current_datetime = datetime.now()
+        # Format: Month Date, Year (line 1)
+        #         HH:MM:SS (line 2)
+        formatted_datetime = current_datetime.strftime("%B %d, %Y\n%H:%M:%S")
+        self.date.setText(formatted_datetime)
+
+    def _switch_tab(self, target_frame, target_button, enable_video=False):
+        """
+        Internal helper to switch between tabs.
+
+        Args:
+            target_frame: The frame widget to make visible
+            target_button: The button widget to disable
+            enable_video: Whether to enable video after switching
+        """
+        # Don't switch if already on this tab
+        if target_frame.isVisible():
+            return
+
+        # Show the target frame, hide all other frames
+        for frame in [self.frame_dashboard, self.frame_ac, self.frame_music, self.frame_map]:
+            frame.setVisible(frame == target_frame)
+
+        # Disable the active tab's button, enable all other buttons
+        for button in [self.btn_dashboard, self.btn_ac, self.btn_music, self.btn_map]:
+            button.setEnabled(button != target_button)
+
+        # Control video based on whether we're going to Map tab or not
+        if enable_video:
+            self.start_video()
+        else:
+            self.stop_video()
 
     def show_dashboard(self):
-        if self.frame_dashboard.isVisible():
-            return
-        self.quit_video()
-        self.frame_dashboard.setVisible(True)
-        self.frame_AC.setVisible(False)
-        self.frame_music.setVisible(False)
-        self.frame_map.setVisible(False)
+        self._switch_tab(self.frame_dashboard, self.btn_dashboard)
 
-    def show_AC(self):
-        if self.frame_AC.isVisible():
-            return
-        self.quit_video()
-        self.frame_dashboard.setVisible(False)
-        self.frame_AC.setVisible(True)
-        self.frame_music.setVisible(False)
-        self.frame_map.setVisible(False)
+    def show_ac(self):
+        self._switch_tab(self.frame_ac, self.btn_ac)
 
-    def show_Music(self):
-        if self.frame_music.isVisible():
-            return
-        self.quit_video()
-        self.frame_dashboard.setVisible(False)
-        self.frame_AC.setVisible(False)
-        self.frame_music.setVisible(True)
-        self.frame_map.setVisible(False)
+    def show_music(self):
+        self._switch_tab(self.frame_music, self.btn_music)
 
-    def show_Map(self):
-        if self.frame_map.isVisible():
-            return
-        self.frame_dashboard.setVisible(False)
-        self.frame_AC.setVisible(False)
-        self.frame_music.setVisible(False)
-        self.frame_map.setVisible(True)
-        self.controlTimer()
+    def show_map(self):
+        self._switch_tab(self.frame_map, self.btn_map, enable_video=True)
 
     def progress(self):
         self.speed.set_MaxValue(100)
@@ -998,7 +1164,30 @@ import resources
 if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Smart Car Dashboard GUI')
-    parser.add_argument('--play-video', metavar='path', type=str, help='[Optional] path to video file to play instead of camera')
+
+    # Create mutually exclusive group for video source selection
+    source_group = parser.add_mutually_exclusive_group()
+    source_group.add_argument(
+        '--camera-device',
+        metavar='idx',
+        type=int,
+        default=0,
+        help='[Optional] camera device index to use (default: 0)'
+    )
+    source_group.add_argument(
+        '--play-video',
+        metavar='path',
+        type=str,
+        help='[Optional] path to video file to play instead of camera'
+    )
+    
+    # Kiosk mode option
+    parser.add_argument(
+        '--kiosk',
+        action='store_true',
+        help='[Optional] run in kiosk mode (fullscreen + no window decorations)'
+    )
+
     args = parser.parse_args()
 
     # Enable automatic high DPI scaling
@@ -1010,16 +1199,22 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     main_app_window = QMainWindow()
-    ui = Ui_MainWindow(video_path=args.play_video)
+    ui = Ui_MainWindow(camera_device=args.camera_device, video_path=args.play_video)
     ui.setupUi(main_app_window)
 
-    # Center window on screen
-    screen = app.primaryScreen()
-    screen_geometry = screen.geometry()
-    window_geometry = main_app_window.frameGeometry()
-    center_point = screen_geometry.center()
-    window_geometry.moveCenter(center_point)
-    main_app_window.move(window_geometry.topLeft())
+    # Apply kiosk mode settings if requested
+    if args.kiosk:
+        # Kiosk mode: frameless window, always on top, fullscreen
+        main_app_window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        main_app_window.showFullScreen()
+    else:
+        # Normal mode: center window on screen
+        screen = app.primaryScreen()
+        screen_geometry = screen.geometry()
+        window_geometry = main_app_window.frameGeometry()
+        center_point = screen_geometry.center()
+        window_geometry.moveCenter(center_point)
+        main_app_window.move(window_geometry.topLeft())
+        main_app_window.show()
 
-    main_app_window.show()
     sys.exit(app.exec_())

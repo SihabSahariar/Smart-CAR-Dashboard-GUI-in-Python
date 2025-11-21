@@ -10,25 +10,35 @@ Welcome to the Car Dashboard (HMI) prototype project! This simple yet intuitive 
 2. **Fuel Status**
    - Keep track of your fuel level to plan your refueling stops effectively.
 
-3. **Door Status**
+3. **Date & Time**
+   - Display a real-time date and time on the `Dashboard` tab.
+
+4. **Door Status**
    - Monitor the status of your car doors for enhanced security.
 
-4. **AC/Music Controller**
+5. **AC/Music Controller**
    - Control your car's air conditioning and music system seamlessly from the dashboard.
 
-5. **Map for Navigation**
+6. **Map for Navigation**
    - Integrated navigation system to guide you through your journeys.
+   - Implemented an automatic location detection for map using IP geolocation.
 
-6. **Weather Forecast**
+7. **Weather Forecast**
    - Stay informed about the weather conditions to plan your trips accordingly.
 
-7. **Camera Streaming**
+8. **Camera Streaming**
    - Access live camera feeds for improved awareness and safety.
+   - Supports turning the camera on & off.
    - Handles camera failures (camera is unavailable or gets disconnected during use).
 
-8. **Prerecorded Video Streaming**
+9. **Prerecorded Video Streaming**
    - When camera is unavailable (i.e., during development or demos), you can play video instead.
+   - Supports pausing the video & resuming it from the same frame.
    - Handles video file failures (file doesn't exist or video stream gets interrupted/corrupted).
+
+10. **Kiosk Mode**
+   - Fullscreen operation without window decorations, preventing access to the underlying OS.
+   - Designed for embedded systems, automotive displays, and dedicated hardware installations.
 
 ## Development
 
@@ -61,18 +71,24 @@ Run the application:
 ```
 or
 ```bash
+(.venv) $ python app.py --camera-device 4
+```
+or
+```bash
 (.venv) $ python app.py --play-video /path/to/your/video.mp4
 ```
-Use `--help` to display the available options
+Use `--help` to display the available options:
 ```console
 (.venv) $ python app.py --help
-usage: app.py [-h] [--play-video path]
+usage: app.py [-h] [--camera-device idx | --play-video path] [--kiosk]
 
 Smart Car Dashboard GUI
 
 options:
   -h, --help            show this help message and exit
+  --camera-device idx   [Optional] camera device index to use (default: 0)
   --play-video path     [Optional] path to video file to play instead of camera
+  --kiosk               [Optional] run in kiosk mode (fullscreen + no window decorations)
 ```
 
 ## Screenshot
@@ -82,6 +98,7 @@ options:
 <img src = "ss/3.PNG">
 <img src = "ss/4.PNG">
 <img src = "ss/5.PNG">
+<img src = "ss/6.PNG">
 
 ## Todo
 

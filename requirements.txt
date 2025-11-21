@@ -4,3 +4,4 @@ PyQt5==5.15.10
 PyQtWebEngine==5.15.7
 qtwidgets==1.1
 qtpy
+requests
