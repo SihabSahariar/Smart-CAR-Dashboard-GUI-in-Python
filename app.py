@@ -243,7 +243,7 @@ class Ui_MainWindow(object):
 "\n"
 "QPushButton{\n"
 "    \n"
-"    background-color: rgb(43,87,151,70);\n"
+"    background-color: rgba(43, 87, 151, 70);\n"
 "    border:None;\n"
 "    color:#fff;\n"
 "    font: 10pt;\n"
@@ -252,7 +252,7 @@ class Ui_MainWindow(object):
 "QPushButton:Hover{\n"
 "\n"
 "    \n"
-"    background-color: rgba(43,87,151,120);\n"
+"    background-color: rgba(43, 87, 151, 120);\n"
 "\n"
 "\n"
 "}\n"
@@ -260,14 +260,14 @@ class Ui_MainWindow(object):
 "QPushButton:Pressed{\n"
 "    \n"
 "    \n"
-"background-color: rgba(43,87,120,100);\n"
+"background-color: rgba(43, 87, 120, 100);\n"
 "\n"
 "}\n"
 "\n"
 "QPushButton:disabled{\n"
 "    \n"
-"    background-color: rgba(70,110,160,130);\n"
-"    color: rgba(200,220,240,180);\n"
+"    background-color: rgba(70, 110, 160, 130);\n"
+"    color: rgba(200, 220, 240, 180);\n"
 "\n"
 "}")
         self.frame.setFrameShape(QFrame.StyledPanel)
@@ -311,7 +311,7 @@ class Ui_MainWindow(object):
         self.frame_dashboard.setEnabled(True)
         self.frame_dashboard.setGeometry(QRect(70, 120, 971, 411))
         self.frame_dashboard.setStyleSheet("QFrame{\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(34, 46, 61), stop:1 rgba(34, 34, 47));\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgb(34, 46, 61), stop:1 rgb(34, 34, 47));\n"
 "\n"
 "border-radius:200px;\n"
 "\n"
@@ -332,7 +332,7 @@ class Ui_MainWindow(object):
         self.frame_2 = QFrame(self.frame_dashboard)
         self.frame_2.setGeometry(QRect(350, 30, 263, 38))
         self.frame_2.setStyleSheet("QFrame{\n"
-"background-color: rgba(85, 85, 127,80);\n"
+"background-color: rgba(85, 85, 127, 80);\n"
 "border-radius:15px;\n"
 "}\n"
 "\n"
@@ -381,7 +381,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.label_12)
         self.frame_3 = QFrame(self.frame_dashboard)
         self.frame_3.setGeometry(QRect(370, 360, 221, 41))
-        self.frame_3.setStyleSheet("background-color: rgba(85, 85, 127,80);\n"
+        self.frame_3.setStyleSheet("background-color: rgba(85, 85, 127, 80);\n"
 "border-radius:15px;")
         self.frame_3.setFrameShape(QFrame.StyledPanel)
         self.frame_3.setFrameShadow(QFrame.Raised)
@@ -429,7 +429,7 @@ class Ui_MainWindow(object):
         self.label_6.setObjectName("label_6")
         self.frame_4 = QFrame(self.frame_dashboard)
         self.frame_4.setGeometry(QRect(730, 340, 141, 42))
-        self.frame_4.setStyleSheet("background-color: rgb(0, 85, 127,130);\n"
+        self.frame_4.setStyleSheet("background-color: rgba(0, 85, 127, 130);\n"
 "border-radius:15px;")
         self.frame_4.setFrameShape(QFrame.StyledPanel)
         self.frame_4.setFrameShadow(QFrame.Raised)
@@ -462,7 +462,7 @@ class Ui_MainWindow(object):
 "QProgressBar::chunk{\n"
 "    border-radius: 5px;\n"
 "    \n"
-"    background-color: rgb(227,162,26,150);\n"
+"    background-color: rgba(227, 162, 26, 150);\n"
 "}")
         self.progressBar_2.setProperty("value", 67)
         self.progressBar_2.setTextVisible(False)
@@ -474,7 +474,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.progressBar_2)
         self.frame_5 = QFrame(self.frame_dashboard)
         self.frame_5.setGeometry(QRect(100, 340, 141, 42))
-        self.frame_5.setStyleSheet("background-color: rgb(152, 57, 38,100);\n"
+        self.frame_5.setStyleSheet("background-color: rgba(152, 57, 38, 100);\n"
 "border-radius:15px;")
         self.frame_5.setFrameShape(QFrame.StyledPanel)
         self.frame_5.setFrameShadow(QFrame.Raised)
@@ -497,7 +497,7 @@ class Ui_MainWindow(object):
         self.frame_ac = QFrame(self.centralwidget)
         self.frame_ac.setGeometry(QRect(70, 120, 971, 411))
         self.frame_ac.setStyleSheet("QFrame{\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(34, 46, 61), stop:1 rgba(34, 34, 47));\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgb(34, 46, 61), stop:1 rgb(34, 34, 47));\n"
 "\n"
 "border-radius:200px;\n"
 "\n"
@@ -543,7 +543,7 @@ class Ui_MainWindow(object):
         self.label_19.setStyleSheet("QLabel\n"
 "{\n"
 "background:None;\n"
-"color:rgb(255,255,255,100);\n"
+"color:rgba(255, 255, 255, 100);\n"
 "}")
         self.label_19.setAlignment(Qt.AlignCenter)
         self.label_19.setObjectName("label_19")
@@ -565,7 +565,7 @@ class Ui_MainWindow(object):
         self.label_18.setStyleSheet("QLabel\n"
 "{\n"
 "background:None;\n"
-"color:rgb(227,162,26);\n"
+"color:rgb(227, 162, 26);\n"
 "}")
         self.label_18.setAlignment(Qt.AlignCenter)
         self.label_18.setObjectName("label_18")
@@ -632,7 +632,7 @@ class Ui_MainWindow(object):
         font.setFamily("Roboto Thin")
         font.setPointSize(13)
         self.labelPercentageCPU_4.setFont(font)
-        self.labelPercentageCPU_4.setStyleSheet("color: rgb(115, 185, 255,70); \n"
+        self.labelPercentageCPU_4.setStyleSheet("color: rgba(115, 185, 255, 70); \n"
 "padding: 0px;\n"
 " background-color: none;")
         self.labelPercentageCPU_4.setAlignment(Qt.AlignCenter)
@@ -640,7 +640,7 @@ class Ui_MainWindow(object):
         self.labelPercentageCPU_4.setObjectName("labelPercentageCPU_4")
         self.line = QFrame(self.weather)
         self.line.setGeometry(QRect(194, 81, 3, 40))
-        self.line.setStyleSheet("background-color: rgba(85, 85, 255,120);")
+        self.line.setStyleSheet("background-color: rgba(85, 85, 255, 120);")
         self.line.setFrameShape(QFrame.VLine)
         self.line.setFrameShadow(QFrame.Sunken)
         self.line.setObjectName("line")
@@ -648,7 +648,7 @@ class Ui_MainWindow(object):
         self.circularIndoor.setGeometry(QRect(70, 90, 220, 220))
         self.circularIndoor.setStyleSheet("QFrame{\n"
 "    border-radius: 110px;    \n"
-"    background-color: qconicalgradient(cx:0.5, cy:0.5, angle:90, stop:0.88 rgba(255,196,13,255), stop:0.712 rgba(255, 255, 255, 0));\n"
+"    background-color: qconicalgradient(cx:0.5, cy:0.5, angle:90, stop:0.88 rgba(255, 196, 13, 255), stop:0.712 rgba(255, 255, 255, 0));\n"
 "}")
         self.circularIndoor.setFrameShape(QFrame.StyledPanel)
         self.circularIndoor.setFrameShadow(QFrame.Raised)
@@ -658,7 +658,7 @@ class Ui_MainWindow(object):
         self.circularOutdoor_2.setBaseSize(QSize(0, 0))
         self.circularOutdoor_2.setStyleSheet("QFrame{\n"
 "    border-radius: 95px;    \n"
-"    background-color: rgb(43,87,151);\n"
+"    background-color: rgb(43, 87, 151);\n"
 "}")
         self.circularOutdoor_2.setFrameShape(QFrame.StyledPanel)
         self.circularOutdoor_2.setFrameShadow(QFrame.Raised)
@@ -682,7 +682,7 @@ class Ui_MainWindow(object):
         self.label_21.setStyleSheet("QLabel\n"
 "{\n"
 "background:None;\n"
-"color:rgb(255,255,255,100);\n"
+"color:rgba(255, 255, 255, 100);\n"
 "}")
         self.label_21.setAlignment(Qt.AlignCenter)
         self.label_21.setObjectName("label_21")
@@ -691,7 +691,7 @@ class Ui_MainWindow(object):
         self.frame_music = QFrame(self.centralwidget)
         self.frame_music.setGeometry(QRect(70, 120, 971, 411))
         self.frame_music.setStyleSheet("QFrame{\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(34, 46, 61), stop:1 rgba(34, 34, 47));\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgb(34, 46, 61), stop:1 rgb(34, 34, 47));\n"
 "\n"
 "border-radius:200px;\n"
 "\n"
@@ -804,14 +804,14 @@ class Ui_MainWindow(object):
         self.frame_map = QFrame(self.centralwidget)
         self.frame_map.setGeometry(QRect(70, 120, 971, 411))
         self.frame_map.setStyleSheet("QFrame{\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(34, 46, 61), stop:1 rgba(34, 34, 47));\n"
+"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgb(34, 46, 61), stop:1 rgb(34, 34, 47));\n"
 "\n"
 "border-radius:200px;\n"
 "\n"
 "}\n"
 "QPushButton{\n"
 "    \n"
-"    background-color: rgba(0,171,169,80);\n"
+"    background-color: rgba(0, 171, 169, 80);\n"
 "    border:None;\n"
 "    color:#fff;\n"
 "    font: 10pt;\n"
@@ -820,7 +820,7 @@ class Ui_MainWindow(object):
 "QPushButton:Hover{\n"
 "\n"
 "    \n"
-"    background-color: rgba(0,171,169,120);\n"
+"    background-color: rgba(0, 171, 169, 120);\n"
 "\n"
 "\n"
 "}\n"
@@ -828,14 +828,14 @@ class Ui_MainWindow(object):
 "QPushButton:Pressed{\n"
 "    \n"
 "    \n"
-"background-color: rgba(0,171,169,100);\n"
+"background-color: rgba(0, 171, 169, 100);\n"
 "\n"
 "}\n"
 "\n"
 "QPushButton:disabled{\n"
 "    \n"
-"    background-color: rgba(0,100,98,50);\n"
-"    color: rgba(200,220,240,180);\n"
+"    background-color: rgba(0, 100, 98, 50);\n"
+"    color: rgba(200, 220, 240, 180);\n"
 "\n"
 "}")
         self.frame_map.setFrameShape(QFrame.NoFrame)
